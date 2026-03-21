@@ -1,0 +1,92 @@
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@drawable/bg_gradient"
+    android:padding="16dp">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical">
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Редактировать профиль"
+            android:textSize="22sp"
+            android:textStyle="bold"
+            android:textColor="@android:color/white"
+            android:layout_marginBottom="20dp"/>
+
+        <EditText
+            android:id="@+id/input_first_name"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="Имя"
+            android:inputType="textPersonName"
+            android:layout_marginBottom="8dp"/>
+
+        <EditText
+            android:id="@+id/input_last_name"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="Фамилия"
+            android:layout_marginBottom="8dp"/>
+
+        <EditText
+            android:id="@+id/input_height"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="Рост (см)"
+            android:inputType="number"
+            android:layout_marginBottom="8dp"/>
+
+        <EditText
+            android:id="@+id/input_weight"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="Вес (кг)"
+            android:inputType="numberDecimal"
+            android:layout_marginBottom="8dp"/>
+
+        <EditText
+            android:id="@+id/input_style"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="Любимый стиль плавания"
+            android:layout_marginBottom="8dp"/>
+
+        <EditText
+            android:id="@+id/input_nation"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="Нация (например 🇦🇲 Армения)"
+            android:layout_marginBottom="8dp"/>
+
+        <EditText
+            android:id="@+id/input_achievements"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="Основные достижения"
+            android:minLines="3"
+            android:gravity="top"
+            android:layout_marginBottom="16dp"/>
+
+        <Button
+            android:id="@+id/btn_save"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="💾 Сохранить"
+            android:backgroundTint="@color/aqua_primary"
+            android:textColor="@android:color/white"
+            android:layout_marginBottom="8dp"/>
+
+        <Button
+            android:id="@+id/btn_back"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="⬅ Назад"
+            android:backgroundTint="@color/aqua_accent"
+            android:textColor="@android:color/white"/>
+    </LinearLayout>
+</ScrollView>

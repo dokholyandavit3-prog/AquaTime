@@ -1,0 +1,85 @@
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@drawable/bg_gradient"
+    android:padding="16dp">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical">
+
+        <!-- Заголовок -->
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="🏆 Достижения"
+            android:textSize="24sp"
+            android:textStyle="bold"
+            android:textColor="@android:color/white"
+            android:layout_marginBottom="16dp"/>
+
+        <!-- Кнопка назад -->
+        <Button
+            android:id="@+id/btn_back"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="⬅ Назад"
+            android:backgroundTint="@color/aqua_primary"
+            android:textColor="@android:color/white"
+            android:layout_marginBottom="20dp"/>
+
+        <!-- Пример карточки достижения -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:background="@drawable/card_background"
+            android:orientation="vertical"
+            android:padding="16dp"
+            android:layout_marginBottom="12dp"
+            android:elevation="3dp">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="🥇 Проплыл 1000 м вольным стилем"
+                android:textColor="@color/text_primary"
+                android:textSize="16sp"
+                android:textStyle="bold"/>
+
+            <ProgressBar
+                android:layout_width="match_parent"
+                android:layout_height="8dp"
+                android:progress="70"
+                android:progressTint="@color/aqua_accent"
+                android:layout_marginTop="8dp"/>
+        </LinearLayout>
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:background="@drawable/card_background"
+            android:orientation="vertical"
+            android:padding="16dp"
+            android:layout_marginBottom="12dp"
+            android:elevation="3dp">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="🔥 5 дней подряд без пропусков"
+                android:textColor="@color/text_primary"
+                android:textSize="16sp"
+                android:textStyle="bold"/>
+
+            <ProgressBar
+                android:layout_width="match_parent"
+                android:layout_height="8dp"
+                android:progress="100"
+                android:progressTint="@color/aqua_primary"
+                android:layout_marginTop="8dp"/>
+        </LinearLayout>
+
+        <!-- Можно добавить ещё карточки аналогично -->
+    </LinearLayout>
+</ScrollView>

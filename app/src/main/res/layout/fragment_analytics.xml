@@ -1,0 +1,232 @@
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@drawable/bg_gradient"
+    android:padding="16dp">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical">
+
+        <!-- 📊 Моя статистика -->
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="📊 Моя статистика"
+            android:textSize="20sp"
+            android:textStyle="bold"
+            android:textColor="@android:color/white"
+            android:layout_marginBottom="8dp"/>
+
+        <!-- Мини-график -->
+        <david.dokholyan.aquatime.ui.ProgressChartView
+            android:id="@+id/progress_chart"
+            android:layout_width="match_parent"
+            android:layout_height="200dp"
+            android:layout_marginBottom="20dp"
+            android:background="@drawable/chart_background"
+            android:elevation="3dp" />
+
+        <!-- Карточки статистики -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:weightSum="3"
+            android:layout_marginBottom="20dp">
+
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_weight="1"
+                android:layout_height="wrap_content"
+                android:background="@drawable/card_background"
+                android:padding="10dp"
+                android:orientation="vertical">
+
+                <TextView
+                    android:id="@+id/tv_total_distance"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="0 м"
+                    android:textStyle="bold"
+                    android:textColor="@color/text_primary"
+                    android:textSize="18sp"/>
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="Дистанция"
+                    android:textColor="@color/text_secondary"/>
+            </LinearLayout>
+
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_weight="1"
+                android:layout_height="wrap_content"
+                android:background="@drawable/card_background"
+                android:padding="10dp"
+                android:orientation="vertical"
+                android:layout_marginHorizontal="6dp">
+
+                <TextView
+                    android:id="@+id/tv_avg_speed"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="0.0 м/с"
+                    android:textStyle="bold"
+                    android:textColor="@color/text_primary"
+                    android:textSize="18sp"/>
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="Скорость"
+                    android:textColor="@color/text_secondary"/>
+            </LinearLayout>
+
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_weight="1"
+                android:layout_height="wrap_content"
+                android:background="@drawable/card_background"
+                android:padding="10dp"
+                android:orientation="vertical">
+
+                <TextView
+                    android:id="@+id/tv_total_time"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="00:00"
+                    android:textStyle="bold"
+                    android:textColor="@color/text_primary"
+                    android:textSize="18sp"/>
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="Время"
+                    android:textColor="@color/text_secondary"/>
+            </LinearLayout>
+        </LinearLayout>
+
+        <!-- 📅 Планировщик тренировок -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:background="@drawable/card_background"
+            android:padding="16dp"
+            android:layout_marginBottom="20dp">
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="📅 Планировщик тренировок"
+                android:textSize="18sp"
+                android:textStyle="bold"
+                android:textColor="@color/text_primary"
+                android:layout_marginBottom="8dp"/>
+
+            <EditText
+                android:id="@+id/et_training_goal"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:hint="Цель (например: 1000 м баттерфляй)"
+                android:background="@android:color/transparent"
+                android:padding="8dp"
+                android:textColor="@color/text_primary"
+                android:textColorHint="@color/text_secondary"/>
+
+            <Button
+                android:id="@+id/btn_add_training"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="➕ Добавить тренировку"
+                android:backgroundTint="@color/aqua_accent"
+                android:textColor="@android:color/white"
+                android:layout_marginTop="8dp"/>
+
+            <TextView
+                android:id="@+id/tv_planner_list"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Нет запланированных тренировок"
+                android:textColor="@color/text_secondary"
+                android:layout_marginTop="10dp"/>
+        </LinearLayout>
+
+        <!-- 🕒 История тренировок (короткий блок) -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:background="@drawable/card_background"
+            android:padding="16dp"
+            android:layout_marginBottom="20dp">
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="🕒 История тренировок"
+                android:textSize="18sp"
+                android:textStyle="bold"
+                android:textColor="@color/text_primary"
+                android:layout_marginBottom="8dp"/>
+
+            <!-- 🔹 Вот он, недостающий элемент -->
+            <TextView
+                android:id="@+id/tv_history_list"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Пока нет завершённых тренировок"
+                android:textColor="@color/text_secondary"
+                android:layout_marginBottom="10dp"/>
+
+            <Button
+                android:id="@+id/btn_open_history"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="📖 Открыть полную историю"
+                android:backgroundTint="@color/aqua_primary"
+                android:textColor="@android:color/white" />
+        </LinearLayout>
+
+        <!-- 🏅 Советы чемпионов -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:background="@drawable/card_background"
+            android:padding="16dp">
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="🏅 Советы чемпионов"
+                android:textSize="18sp"
+                android:textStyle="bold"
+                android:textColor="@color/text_primary"
+                android:layout_marginBottom="8dp"/>
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="«Плыви с умом, а не с силой» — Майкл Фелпс"
+                android:textColor="@color/text_secondary"
+                android:layout_marginBottom="4dp"/>
+
+            <Button
+                android:id="@+id/btn_open_champions"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="🏆 Смотреть больше советов"
+                android:backgroundTint="@color/aqua_accent"
+                android:textColor="@android:color/white" />
+        </LinearLayout>
+        <!-- Отступ, чтобы последняя кнопка не обрезалась -->
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="100dp" />
+    </LinearLayout>
+</ScrollView>

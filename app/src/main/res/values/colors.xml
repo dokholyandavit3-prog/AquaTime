@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Основные фирменные цвета AquaTime -->
+
+    <!-- Главный цвет воды -->
+    <color name="aqua_primary">#0093E9</color>
+    <!-- Градиентный морской оттенок -->
+    <color name="aqua_secondary">#80D0C7</color>
+    <!-- Цвет для акцентов (например, кнопки) -->
+    <color name="aqua_accent">#0077B6</color>
+
+    <!-- Цвет текста -->
+    <color name="text_primary">#0D0D0D</color>
+    <color name="text_secondary">#5F5F5F</color>
+
+    <!-- Цвет кнопки -->
+    <color name="button_primary">#0096C7</color>
+    <color name="button_pressed">#0077B6</color>
+
+    <!-- Фон приложения -->
+    <color name="background_light">#F4FAFF</color>
+    <color name="background_dark">#023E8A</color>
+
+    <!-- Ошибки / предупреждения -->
+    <color name="error_red">#E63946</color>
+
+    <!-- Старые цвета, чтобы не было ошибок -->
+    <color name="teal_700">#018786</color>
+    <color name="purple_500">#9C27B0</color>
+</resources>

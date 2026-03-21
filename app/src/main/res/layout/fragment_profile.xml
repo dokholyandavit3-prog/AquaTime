@@ -1,0 +1,162 @@
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@drawable/bg_gradient"
+    android:padding="16dp">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical">
+
+
+
+        <!-- Личные данные -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:background="@drawable/card_background"
+            android:orientation="vertical"
+            android:padding="16dp"
+            android:layout_marginBottom="16dp"
+            android:elevation="3dp">
+
+            <TextView
+                android:id="@+id/tv_name"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Имя: Давид"
+                android:textColor="@color/text_primary"
+                android:textSize="16sp"
+                android:textStyle="bold"/>
+
+            <TextView
+                android:id="@+id/tv_age_weight"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Возраст: 17, Рост: 180 см, Вес: 70 кг"
+                android:textColor="@color/text_secondary"
+                android:layout_marginTop="4dp"/>
+        </LinearLayout>
+
+        <!-- Мини-достижения -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:background="@drawable/card_background"
+            android:orientation="vertical"
+            android:padding="16dp"
+            android:layout_marginBottom="16dp"
+            android:elevation="3dp">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="🏆 Достижения"
+                android:textColor="@color/text_primary"
+                android:textStyle="bold"
+                android:textSize="16sp"
+                android:layout_marginBottom="8dp"/>
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="🥇 Проплыл 1000 м"
+                    android:textColor="@color/text_primary"/>
+
+                <ProgressBar
+                    android:id="@+id/progress_1000m"
+                    android:layout_width="match_parent"
+                    android:layout_height="8dp"
+                    android:progress="70"
+                    android:progressTint="@color/aqua_accent"
+                    android:layout_marginBottom="8dp"/>
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="🔥 5 дней подряд"
+                    android:textColor="@color/text_primary"/>
+
+                <ProgressBar
+                    android:id="@+id/progress_streak"
+                    android:layout_width="match_parent"
+                    android:layout_height="8dp"
+                    android:progress="100"
+                    android:progressTint="@color/aqua_primary"/>
+            </LinearLayout>
+        </LinearLayout>
+
+        <!-- Следующая тренировка -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:background="@drawable/card_background"
+            android:orientation="vertical"
+            android:padding="16dp"
+            android:layout_marginBottom="16dp"
+            android:elevation="3dp">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="📅 Следующая тренировка"
+                android:textColor="@color/text_primary"
+                android:textSize="16sp"
+                android:textStyle="bold"/>
+
+            <TextView
+                android:id="@+id/tv_next_workout"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Вольный стиль, 1000 м, 16:00"
+                android:textColor="@color/text_secondary"
+                android:layout_marginTop="4dp"/>
+
+            <Button
+                android:id="@+id/btn_start_next_workout"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="🏁 Начать тренировку"
+                android:backgroundTint="@color/aqua_accent"
+                android:textColor="@android:color/white"
+                android:layout_marginTop="8dp"/>
+        </LinearLayout>
+
+        <!-- Кнопки редактировать и достижения -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center"
+            android:layout_marginBottom="20dp"
+            android:weightSum="2">
+
+            <Button
+                android:id="@+id/btn_edit_profile"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="✏ Редактировать"
+                android:backgroundTint="@color/aqua_primary"
+                android:textColor="@android:color/white"
+                android:layout_marginEnd="8dp"/>
+
+            <Button
+                android:id="@+id/btn_achievements"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="🏆 Достижения"
+                android:backgroundTint="@color/aqua_accent"
+                android:textColor="@android:color/white"
+                android:layout_marginStart="8dp"/>
+        </LinearLayout>
+
+    </LinearLayout>
+</ScrollView>

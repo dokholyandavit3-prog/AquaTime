@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="utf-8"?>
+<navigation xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    app:startDestination="@id/dashboardFragment">
+
+    <fragment
+        android:id="@+id/dashboardFragment"
+        android:name="david.dokholyan.aquatime.ui.DashboardFragment"
+        android:label="Главная" />
+
+    <fragment
+        android:id="@+id/trainingFragment"
+        android:name="david.dokholyan.aquatime.ui.training.TrainingFragment"
+        android:label="Тренировка" />
+
+    <fragment
+        android:id="@+id/analyticsFragment"
+        android:name="david.dokholyan.aquatime.ui.AnalyticsFragment"
+        android:label="Аналитика" />
+
+    <fragment
+        android:id="@+id/editProfileFragment"
+        android:name="david.dokholyan.aquatime.ui.profile.EditProfileFragment"
+        android:label="Редактировать профиль" />
+
+    <fragment
+        android:id="@+id/profileFragment"
+        android:name="david.dokholyan.aquatime.ui.profile.ProfileFragment"
+        android:label="Профиль">
+        <action
+            android:id="@+id/action_profile_to_edit"
+            app:destination="@id/editProfileFragment" />
+        <action
+            android:id="@+id/action_profile_to_achievements"
+            app:destination="@id/achievementsFragment" />
+    </fragment>
+
+    <fragment
+        android:id="@+id/achievementsFragment"
+        android:name="david.dokholyan.aquatime.ui.profile.AchievementsFragment"
+        android:label="Достижения" />
+
+    <fragment
+        android:id="@+id/historyFragment"
+        android:name="david.dokholyan.aquatime.ui.history.HistoryFragment"
+        android:label="История тренировок"
+        tools:layout="@layout/fragment_history_full" />
+
+    <fragment
+        android:id="@+id/championsFragment"
+        android:name="david.dokholyan.aquatime.ui.champions.ChampionsFragment"
+        android:label="Советы чемпионов"
+        tools:layout="@layout/fragment_champions_full" />
+    <fragment
+        android:id="@+id/athleteDetailFragment"
+        android:name="david.dokholyan.aquatime.ui.champions.AthleteDetailFragment"
+        android:label="Профиль чемпиона"
+        tools:layout="@layout/fragment_athlete_detail" />
+
+</navigation>
