@@ -1,5 +1,7 @@
 package david.dokholyan.aquatime;
 
+import android.content.Intent;
+import android.content.SharedPreferences;
 import android.os.Bundle;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.navigation.NavController;
@@ -23,6 +25,14 @@ public class MainActivity extends AppCompatActivity {
 
         NavigationUI.setupWithNavController(bottomNav, navController);
 
+        SharedPreferences prefs = getSharedPreferences("AquaTime", MODE_PRIVATE);
+
+        boolean isFirstLaunch = prefs.getBoolean("isFirstLaunch", true);
+
+        if (isFirstLaunch) {
+            startActivity(new Intent(this, UserSetupActivity.class));
+            finish();
+        }
     }
 }
 

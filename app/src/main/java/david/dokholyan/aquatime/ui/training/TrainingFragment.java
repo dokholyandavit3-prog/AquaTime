@@ -158,9 +158,16 @@ public class TrainingFragment extends Fragment {
     // SAVE & DELETE RESULTS
     // =======================
     private void saveMeasurement() {
-        String result = spinnerDistance.getSelectedItem() + " — " + tvTimer.getText();
+
+        String distanceStr = spinnerDistance.getSelectedItem().toString();
+        String result = distanceStr + " — " + tvTimer.getText();
+
         results.add(result);
+
         updateVolume();
+
+        updateStatsByStyle(distanceStr); // 🔥 НОВОЕ
+
         saveResults();
         updateAdapters();
     }
@@ -211,7 +218,31 @@ public class TrainingFragment extends Fragment {
                 android.R.layout.simple_list_item_1, results);
         listBestResults.setAdapter(bestAdapter);
     }
+    private void updateStatsByStyle(String distanceStr) {
 
+        SharedPreferences prefs = getActivity().getSharedPreferences("AquaTime", getContext().MODE_PRIVATE);
+
+        String style = "freestyle";
+
+        if (distanceStr.contains("Брасс")) style = "breast";
+        else if (distanceStr.contains("Баттерфляй")) style = "fly";
+        else if (distanceStr.contains("Спина")) style = "back";
+
+        int meters = 0;
+
+        if (distanceStr.contains("50")) meters = 50;
+        else if (distanceStr.contains("100")) meters = 100;
+        else if (distanceStr.contains("200")) meters = 200;
+        else if (distanceStr.contains("400")) meters = 400;
+
+        int total = prefs.getInt(style + "_meters", 0);
+        int trainings = prefs.getInt(style + "_trainings", 0);
+
+        prefs.edit()
+                .putInt(style + "_meters", total + meters)
+                .putInt(style + "_trainings", trainings + 1)
+                .apply();
+    }
     // =======================
     // AI TRAINER
     // =======================

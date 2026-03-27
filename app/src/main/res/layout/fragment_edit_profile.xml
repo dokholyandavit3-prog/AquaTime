@@ -18,6 +18,15 @@
             android:textColor="@android:color/white"
             android:layout_marginBottom="20dp"/>
 
+        <TextView
+            android:id="@+id/tv_email"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="📧 Email"
+            android:textColor="@android:color/white"
+            android:textSize="14sp"
+            android:layout_marginBottom="10dp"/>
+
         <EditText
             android:id="@+id/input_first_name"
             android:layout_width="match_parent"
@@ -49,18 +58,18 @@
             android:inputType="numberDecimal"
             android:layout_marginBottom="8dp"/>
 
-        <EditText
-            android:id="@+id/input_style"
+        <!-- Стиль плавания -->
+        <Spinner
+            android:id="@+id/spinner_style"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:hint="Любимый стиль плавания"
             android:layout_marginBottom="8dp"/>
 
-        <EditText
-            android:id="@+id/input_nation"
+        <!-- Нация -->
+        <Spinner
+            android:id="@+id/spinner_nation"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:hint="Нация (например 🇦🇲 Армения)"
             android:layout_marginBottom="8dp"/>
 
         <EditText
@@ -71,6 +80,20 @@
             android:minLines="3"
             android:gravity="top"
             android:layout_marginBottom="16dp"/>
+
+        <Button
+            android:id="@+id/btn_choose_avatar"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="🎭 Выбрать аватар"
+            android:layout_marginBottom="8dp"/>
+
+        <Button
+            android:id="@+id/btn_pick_image"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="📸 Загрузить фото"
+            android:layout_marginBottom="12dp"/>
 
         <Button
             android:id="@+id/btn_save"
