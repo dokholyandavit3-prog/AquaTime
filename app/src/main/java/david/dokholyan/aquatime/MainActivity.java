@@ -19,13 +19,12 @@ public class MainActivity extends AppCompatActivity {
 
         BottomNavigationView bottomNav = findViewById(R.id.nav_view);
 
-        // Находим контроллер навигации
+
         NavController navController = Navigation.findNavController(this, R.id.nav_host_fragment);
 
-        // СВЯЗЫВАЕМ меню с контроллером (чтобы при клике менялись фрагменты)
+
         NavigationUI.setupWithNavController(bottomNav, navController);
 
-        // Логика гостя и авторизации (которую мы писали ранее)
         boolean isGuest = getIntent().getBooleanExtra("isGuest", false);
         if (!isGuest && com.google.firebase.auth.FirebaseAuth.getInstance().getCurrentUser() == null) {
             startActivity(new Intent(this, LoginActivity.class));

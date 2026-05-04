@@ -7,11 +7,10 @@ import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
 import android.net.Uri;
 import android.os.Bundle;
-import android.text.InputFilter;
+import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.view.inputmethod.InputMethodManager;
 import android.widget.*;
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
@@ -44,7 +43,6 @@ public class ProfileFragment extends Fragment {
 
         initViews(view);
 
-
         imagePicker = registerForActivityResult(new ActivityResultContracts.GetContent(), uri -> {
             if (uri != null) {
                 String path = copyToInternalStorage(uri);
@@ -69,14 +67,11 @@ public class ProfileFragment extends Fragment {
         tvCountry = v.findViewById(R.id.tv_country);
         imgProfile = v.findViewById(R.id.img_avatar);
 
-        // Кнопка редактирования
         v.findViewById(R.id.btn_edit_profile).setOnClickListener(view ->
                 Navigation.findNavController(view).navigate(R.id.editProfileFragment));
 
-        // Клик по аватару для смены
         imgProfile.setOnClickListener(view -> showAvatarSelectionMenu());
 
-        // КНОПКА ВЫХОДА (Исправлено)
         Button btnLogout = v.findViewById(R.id.btn_logout);
         if (btnLogout != null) {
             btnLogout.setOnClickListener(view -> showLogoutDialog());
@@ -118,22 +113,18 @@ public class ProfileFragment extends Fragment {
     }
 
     private void performLogout() {
-
         com.google.firebase.auth.FirebaseAuth.getInstance().signOut();
-
         if (prefs != null) {
             prefs.edit().clear().apply();
         }
-
         if (getActivity() != null) {
             android.content.Intent intent = new android.content.Intent(getActivity(), david.dokholyan.aquatime.LoginActivity.class);
-
             intent.addFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK | android.content.Intent.FLAG_ACTIVITY_CLEAR_TASK);
-
             startActivity(intent);
             getActivity().finish();
         }
     }
+
     private void renderProfileImage() {
         String type = prefs.getString("profile_type", "emoji");
         String val = prefs.getString("profile_val", DEFAULT_EMOJI);
@@ -177,14 +168,8 @@ public class ProfileFragment extends Fragment {
         paint.setShader(shader);
         float r = size / 2f;
 
+        // Рисуем только круг с фото, без внешней рамки
         canvas.drawCircle(r, r, r, paint);
-
-        Paint borderPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
-        borderPaint.setColor(Color.parseColor("#03A9F4"));
-        borderPaint.setStyle(Paint.Style.STROKE);
-        float strokeWidth = size * 0.04f;
-        borderPaint.setStrokeWidth(strokeWidth);
-        canvas.drawCircle(r, r, r - (strokeWidth / 2f), borderPaint);
 
         return new BitmapDrawable(getResources(), output);
     }
@@ -203,44 +188,87 @@ public class ProfileFragment extends Fragment {
     }
 
     private void showAvatarSelectionMenu() {
-        String[] options = {"📸 Галерея", "✍️ Ввести Эмодзи"};
+        String[] options = {"📸 Галерея", "✨ Выбрать Эмодзи"};
         new AlertDialog.Builder(requireContext())
                 .setItems(options, (d, w) -> {
                     if (w == 0) imagePicker.launch("image/*");
-                    else showEmojiInputDialog();
+                    else showEmojiSelectionDialog();
                 }).show();
     }
 
-    private void showEmojiInputDialog() {
-        final EditText input = new EditText(requireContext());
-        input.setHint("Один эмодзи");
-        input.setFilters(new InputFilter[]{new InputFilter.LengthFilter(2)});
+    private void showEmojiSelectionDialog() {
+        final String[] emojis = {
+                "😀","😁","😂","🤣","😃","😄","😅","😆","😉","😊",
+                "😋","😎","😍","😘","🥰","😗","😙","😚","🙂","🤗",
+                "🤩","🤔","🤨","😐","😑","😶","🙄","😏","😣","😥",
+                "😮","🤐","😯","😪","😫","🥱","😴","😌","😛","😜",
+                "😝","🤤","😒","😓","😔","😕","🙃","🫠","🤑","😲",
+                "☹️","🙁","😖","😞","😟","😤","😢","😭","😦","😧",
+                "😨","😩","🤯","😬","😰","😱","🥵","🥶","😳","🤪",
+                "😵","🥴","😠","😡","🤬","😷","🤒","🤕","🫡","🥳",
+                "😇","🤠","🤡","👻","💀","☠️","👽","🤖","👾","🎃",
+                "⚽","🏀","🏈","⚾","🥎","🎾","🏐","🏉","🥏","🎱",
+                "🏓","🏸","🏒","🏑","🥍","🏏","🥅","⛳","🪁","🏹",
+                "🎣","🤿","🥊","🥋","🎽","🛹","🛷","⛸️","🥌","🎿",
+                "⛷️","🏂","🪂","🏋️","🤼","🤸","⛹️","🤺","🤾","🏌️",
+                "🏇","🧘","🏄","🏊","🏊‍♂️","🏊‍♀️","🚣","🚴","🚴‍♂️","🚴‍♀️",
+                "🚵","🏃","🏃‍♂️","🏃‍♀️","🚶","💪","🔥","🏆","🥇","🥈",
+                "🥉","🏅","🎖️","🐶","🐱","🐭","🐹","🐰","🦊","🐻",
+                "🐼","🐨","🐯","🦁","🐮","🐷","🐽","🐸","🐵","🙈",
+                "🙉","🙊","🐒","🐔","🐧","🐦","🐤","🐣","🐥","🦆",
+                "🦅","🦉","🦇","🐺","🐗","🐴","🦄","🐝","🪱","🐛",
+                "🦋","🐌","🐞","🐜","🪰","🪲","🪳","🦟","🦗","🕷️",
+                "🕸️","🦂","🐢","🐍","🦎","🦖","🦕","🐙","🦑","🪼",
+                "🦐","🦞","🦀","🐡","🐠","🐟","🐬","🐳","🐋","🦈",
+                "🐊","🐅","🐆","🦓","🦍","🦧","🐘","🦛","🦏","🐪",
+                "🐫","🦒","🦘","🦬","🐃","🐂","🐄","🐎","🐖","🐏",
+                "🐑","🦙","🐐","🦌","🐕","🐩","🦮","🐕‍🦺","🐈","🐈‍⬛",
+                "🪶","🐓","🦃","🦤","🦚","🦜","🪽","🐇","🦝","🦨",
+                "🦡","🦫","🦦","🦥","🐁","🐀","🐿️","🦔"
+        };
 
-        FrameLayout container = new FrameLayout(requireContext());
-        FrameLayout.LayoutParams params = new FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
-        params.leftMargin = 60; params.rightMargin = 60;
-        input.setLayoutParams(params);
-        container.addView(input);
+        GridView gridView = new GridView(requireContext());
+        gridView.setNumColumns(5);
+        gridView.setVerticalSpacing(18);
+        gridView.setHorizontalSpacing(18);
+        gridView.setPadding(25, 25, 25, 25);
+
+        ArrayAdapter<String> adapter = new ArrayAdapter<String>(
+                requireContext(),
+                android.R.layout.simple_list_item_1,
+                emojis
+        ) {
+            @NonNull
+            @Override
+            public View getView(int position, View convertView, @NonNull ViewGroup parent) {
+                TextView tv = (TextView) super.getView(position, convertView, parent);
+                tv.setText(emojis[position]);
+                tv.setTextSize(28f);
+                tv.setGravity(Gravity.CENTER);
+                tv.setPadding(8, 8, 8, 8);
+                return tv;
+            }
+        };
+
+        gridView.setAdapter(adapter);
 
         AlertDialog dialog = new AlertDialog.Builder(requireContext())
-                .setTitle("Выбор стиля")
-                .setView(container)
-                .setPositiveButton("ОК", (d, w) -> {
-                    String result = input.getText().toString().trim();
-                    if (!result.isEmpty()) {
-                        prefs.edit().putString("profile_type", "emoji").putString("profile_val", result).apply();
-                        renderProfileImage();
-                    }
-                })
+                .setTitle("Выберите стиль")
+                .setView(gridView)
                 .setNegativeButton("Отмена", null)
                 .create();
-        dialog.show();
 
-        input.postDelayed(() -> {
-            input.requestFocus();
-            InputMethodManager imm = (InputMethodManager) requireContext().getSystemService(Context.INPUT_METHOD_SERVICE);
-            if (imm != null) imm.showSoftInput(input, InputMethodManager.SHOW_IMPLICIT);
-        }, 100);
+        gridView.setOnItemClickListener((parent, view1, position, id) -> {
+            prefs.edit()
+                    .putString("profile_type", "emoji")
+                    .putString("profile_val", emojis[position])
+                    .apply();
+
+            renderProfileImage();
+            dialog.dismiss();
+        });
+
+        dialog.show();
     }
 
     private String copyToInternalStorage(Uri uri) {

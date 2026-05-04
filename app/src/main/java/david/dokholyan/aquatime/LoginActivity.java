@@ -25,7 +25,7 @@ public class LoginActivity extends AppCompatActivity {
 
         mAuth = FirebaseAuth.getInstance();
 
-        // Проверяем автоматический вход
+
         FirebaseUser currentUser = mAuth.getCurrentUser();
         if (currentUser != null && currentUser.isEmailVerified()) {
             navigateToMain();
@@ -61,7 +61,7 @@ public class LoginActivity extends AppCompatActivity {
         String password = etPassword.getText().toString().trim();
         String confirmPassword = etConfirmPassword.getText().toString().trim();
 
-        // Проверки полей
+
         if (email.isEmpty() || password.isEmpty() || confirmPassword.isEmpty()) {
             Toast.makeText(this, "Заполните все поля", Toast.LENGTH_SHORT).show();
             return;
@@ -72,7 +72,7 @@ public class LoginActivity extends AppCompatActivity {
             return;
         }
 
-        // Проверка совпадения паролей
+
         if (!password.equals(confirmPassword)) {
             Toast.makeText(this, "Пароли не совпадают!", Toast.LENGTH_SHORT).show();
             return;

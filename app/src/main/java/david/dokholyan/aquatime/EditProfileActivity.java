@@ -22,7 +22,7 @@ public class EditProfileActivity extends AppCompatActivity {
 
         SharedPreferences prefs = getSharedPreferences("user_data", MODE_PRIVATE);
 
-        // Подставляем текущие данные
+
         name.setText(prefs.getString("name", ""));
         age.setText(prefs.getString("age", ""));
         height.setText(prefs.getString("height", ""));
@@ -36,7 +36,7 @@ public class EditProfileActivity extends AppCompatActivity {
             editor.putString("weight", weight.getText().toString());
             editor.apply();
 
-            // Возвращаемся обратно в MainActivity
+
             startActivity(new Intent(EditProfileActivity.this, MainActivity.class));
             finish();
         });
