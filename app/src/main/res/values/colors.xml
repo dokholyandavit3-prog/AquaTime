@@ -27,4 +27,9 @@
     <!-- Старые цвета, чтобы не было ошибок -->
     <color name="teal_700">#018786</color>
     <color name="purple_500">#9C27B0</color>
+
+    <color name="aqua_deep">#0277BD</color>
+    <color name="aqua_light">#E1F5FE</color>
+
+    <color name="white">#FFFFFF</color>
 </resources>

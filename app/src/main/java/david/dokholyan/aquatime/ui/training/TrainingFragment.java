@@ -1,8 +1,13 @@
 package david.dokholyan.aquatime.ui.training;
 
-import david.dokholyan.aquatime.R;
+import android.app.AlarmManager;
+import android.app.DatePickerDialog;
+import android.app.PendingIntent;
 import android.app.TimePickerDialog;
+import android.content.Context;
+import android.content.Intent;
 import android.content.SharedPreferences;
+import android.graphics.Color;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.SystemClock;
@@ -10,94 +15,142 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.*;
+import androidx.annotation.NonNull;
 import androidx.fragment.app.Fragment;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
+import david.dokholyan.aquatime.R;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Calendar;
+import java.util.Date;
+import java.util.Locale;
 import java.util.Random;
+
+interface OnResultClickListener { void onItemClick(int position); }
 
 public class TrainingFragment extends Fragment {
 
-    TextView tvTimer, tvTipText, tvTodayTraining, tvWeekProgress;
-    Spinner spinnerMood, spinnerDistance;
-    ListView listResults, listBestResults;
-    CalendarView calendarTraining;
-    Button btnStartTimer, btnStopTimer, btnResetTimer, btnSaveMeasure, btnDeleteMeasure, btnStartTraining, btnTrainingHistory;
+    private TextView tvTimer, tvTodayTraining, tvStatsCount, tvSwimmingTip;
+    private Spinner spinnerDistance;
+    private EditText etManualDist;
+    private RecyclerView rvResults;
+    private Button btnStartTimer, btnStopTimer, btnResetTimer, btnSaveMeasure, btnSaveManual, btnStartTraining, btnOpenCalendar, btnDeleteMeasure;
 
-    Handler handler = new Handler();
-    long startTime = 0;
-    boolean running = false;
+    private Handler handler = new Handler();
+    private long startTime = 0L, updateTime = 0L, timeSwapBuff = 0L, timeInMilliseconds = 0L;
+    private boolean running = false;
 
-    ArrayList<String> results = new ArrayList<>();
-    ArrayList<String> bestResults = new ArrayList<>();
-
-    ArrayAdapter<String> resultsAdapter;
-    ArrayAdapter<String> bestAdapter;
-    SharedPreferences prefs;
-
-    int weeklyGoal = 3000;
-    int weeklyVolume = 0;
+    private ArrayList<String> allResults = new ArrayList<>();
+    private ResultsAdapter resultsAdapter;
+    private SharedPreferences prefs;
+    private int selectedPosition = -1;
 
     @Override
-    public View onCreateView(LayoutInflater inflater, ViewGroup container,
-                             Bundle savedInstanceState) {
-
+    public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.fragment_training, container, false);
+        prefs = getActivity().getSharedPreferences("AquaTime", Context.MODE_PRIVATE);
 
-        tvTimer = view.findViewById(R.id.tv_timer);
-        tvTipText = view.findViewById(R.id.tv_tip_text);
-        tvTodayTraining = view.findViewById(R.id.tv_today_training);
-        tvWeekProgress = view.findViewById(R.id.tv_week_progress);
+        initViews(view);
+        setupRecyclerViews();
+        setupDistances();
+        loadData();
+        showRandomTip();
 
-        spinnerMood = view.findViewById(R.id.spinner_mood);
-        spinnerDistance = view.findViewById(R.id.spinner_distance);
-
-        listResults = view.findViewById(R.id.list_results);
-        listBestResults = view.findViewById(R.id.list_best_results);
-
-        calendarTraining = view.findViewById(R.id.calendar_training);
-
-        btnStartTimer = view.findViewById(R.id.btn_start_timer);
-        btnStopTimer = view.findViewById(R.id.btn_stop_timer);
-        btnResetTimer = view.findViewById(R.id.btn_reset_timer);
-        btnSaveMeasure = view.findViewById(R.id.btn_save_measure);
-        btnDeleteMeasure = view.findViewById(R.id.btn_delete_measure);
-        btnStartTraining = view.findViewById(R.id.btn_start_training);
-        btnTrainingHistory = view.findViewById(R.id.btn_training_history);
-
-        prefs = getActivity().getSharedPreferences("AquaTime", getContext().MODE_PRIVATE);
-
-        setupMoodSpinner();
-        setupDistanceSpinner();
-        loadResults();
-        setupCalendar();
-
+        // Таймер
         btnStartTimer.setOnClickListener(v -> startTimer());
         btnStopTimer.setOnClickListener(v -> stopTimer());
         btnResetTimer.setOnClickListener(v -> resetTimer());
-        btnSaveMeasure.setOnClickListener(v -> saveMeasurement());
-        btnDeleteMeasure.setOnClickListener(v -> deleteMeasurement());
 
-        btnStartTraining.setOnClickListener(v -> generateAITraining());
-        btnTrainingHistory.setOnClickListener(v -> showTrainingHistory());
+        // Замеры (для нормативов)
+        btnSaveMeasure.setOnClickListener(v -> saveNewMeasure());
+
+        // Твой Конструктор (добавление в план на сегодня)
+        btnSaveManual.setOnClickListener(v -> saveManualTrainingToPlan());
+
+        // Робот и Календарь
+        btnStartTraining.setOnClickListener(v -> getAIPlan());
+        btnOpenCalendar.setOnClickListener(v -> showDateTimePicker());
+
+        // Удаление
+        btnDeleteMeasure.setOnClickListener(v -> deleteSelectedResult());
 
         return view;
     }
 
-    // =======================
-    // TIMER
-    // =======================
-    Runnable timerRunnable = new Runnable() {
-        @Override
-        public void run() {
-            long millis = SystemClock.uptimeMillis() - startTime;
-            int ms = (int) (millis % 1000);
-            int seconds = (int) (millis / 1000) % 60;
-            int minutes = (int) (millis / (1000 * 60));
+    private void initViews(View v) {
+        tvTimer = v.findViewById(R.id.tv_timer);
+        tvTodayTraining = v.findViewById(R.id.tv_today_training);
+        tvStatsCount = v.findViewById(R.id.tv_stats_count);
+        tvSwimmingTip = v.findViewById(R.id.tv_swimming_tip);
+        spinnerDistance = v.findViewById(R.id.spinner_distance);
+        etManualDist = v.findViewById(R.id.et_manual_dist);
+        rvResults = v.findViewById(R.id.rv_results);
 
-            tvTimer.setText(String.format("%02d:%02d:%03d", minutes, seconds, ms));
-            handler.postDelayed(this, 30);
+        btnStartTimer = v.findViewById(R.id.btn_start_timer);
+        btnStopTimer = v.findViewById(R.id.btn_stop_timer);
+        btnResetTimer = v.findViewById(R.id.btn_reset_timer);
+        btnSaveMeasure = v.findViewById(R.id.btn_save_measure);
+        btnSaveManual = v.findViewById(R.id.btn_save_manual_training);
+        btnStartTraining = v.findViewById(R.id.btn_start_training);
+        btnOpenCalendar = v.findViewById(R.id.btn_open_calendar);
+        btnDeleteMeasure = v.findViewById(R.id.btn_delete_measure);
+    }
+
+
+
+    private void saveManualTrainingToPlan() {
+        String exercise = etManualDist.getText().toString().trim();
+        if (exercise.isEmpty()) {
+            Toast.makeText(getContext(), "Напишите упражнение", Toast.LENGTH_SHORT).show();
+            return;
         }
-    };
+
+        String currentPlan = tvTodayTraining.getText().toString();
+
+        if (currentPlan.contains("Нажми на робота")) currentPlan = "";
+
+        String updatedPlan = currentPlan + (currentPlan.isEmpty() ? "" : "\n") + "• " + exercise;
+        tvTodayTraining.setText(updatedPlan);
+        tvTodayTraining.setTextColor(Color.parseColor("#102A43"));
+
+        etManualDist.setText("");
+        Toast.makeText(getContext(), "Добавлено в план", Toast.LENGTH_SHORT).show();
+    }
+
+    private void saveNewMeasure() {
+        String time = tvTimer.getText().toString();
+        if (time.equals("00:00:00")) return;
+
+        int styleIdx = spinnerDistance.getSelectedItemPosition();
+        updateBestTime(styleIdx, time);
+
+        String date = new SimpleDateFormat("dd.MM HH:mm", Locale.getDefault()).format(new Date());
+        String entry = spinnerDistance.getSelectedItem().toString() + " | " + time + " (" + date + ")";
+
+        allResults.add(0, entry);
+        saveData();
+        resultsAdapter.notifyDataSetChanged();
+        Toast.makeText(getContext(), "Результат сохранен!", Toast.LENGTH_SHORT).show();
+    }
+
+    private void updateBestTime(int styleIdx, String newTime) {
+        String key = "best_style_" + styleIdx;
+        String current = prefs.getString(key, "99:99:99");
+        if (parseToSec(newTime) < parseToSec(current)) {
+            prefs.edit().putString(key, newTime).apply();
+        }
+    }
+
+    private double parseToSec(String t) {
+        try {
+            String[] p = t.split(":");
+            return Integer.parseInt(p[0]) * 60 + Integer.parseInt(p[1]) + Integer.parseInt(p[2]) / 100.0;
+        } catch (Exception e) { return 9999; }
+    }
+
+    // --- СЕКУНДОМЕР ---
 
     private void startTimer() {
         if (!running) {
@@ -106,195 +159,125 @@ public class TrainingFragment extends Fragment {
             running = true;
         }
     }
-
     private void stopTimer() {
-        handler.removeCallbacks(timerRunnable);
-        running = false;
+        if (running) {
+            timeSwapBuff += timeInMilliseconds;
+            handler.removeCallbacks(timerRunnable);
+            running = false;
+        }
     }
-
     private void resetTimer() {
-        handler.removeCallbacks(timerRunnable);
-        tvTimer.setText("00:00:00.000");
-        running = false;
+        stopTimer();
+        startTime = 0L; updateTime = 0L; timeSwapBuff = 0L; timeInMilliseconds = 0L;
+        tvTimer.setText("00:00:00");
     }
+    private Runnable timerRunnable = new Runnable() {
+        public void run() {
+            timeInMilliseconds = SystemClock.uptimeMillis() - startTime;
+            updateTime = timeSwapBuff + timeInMilliseconds;
+            int secs = (int) (updateTime / 1000);
+            int mins = secs / 60; secs %= 60;
+            int ms = (int) (updateTime % 1000) / 10;
+            tvTimer.setText(String.format(Locale.getDefault(), "%02d:%02d:%02d", mins, secs, ms));
+            handler.postDelayed(this, 30);
+        }
+    };
 
-    // =======================
-    // MOOD & TIP
-    // =======================
-    private void setupMoodSpinner() {
-        String[] moods = {"Отличное", "Нормальное", "Устал"};
-        ArrayAdapter<String> adapter = new ArrayAdapter<>(getContext(),
-                android.R.layout.simple_spinner_item, moods);
-        spinnerMood.setAdapter(adapter);
 
-        spinnerMood.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
-            @Override public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
-                switch (position) {
-                    case 0: tvTipText.setText("Сегодня можно сделать интенсивную тренировку"); break;
-                    case 1: tvTipText.setText("Работай над техникой"); break;
-                    case 2: tvTipText.setText("Сделай лёгкую восстановительную тренировку"); break;
-                }
-            }
-            @Override public void onNothingSelected(AdapterView<?> parent) {}
-        });
-    }
 
-    // =======================
-    // DISTANCES
-    // =======================
-    private void setupDistanceSpinner() {
-        String[] distances = {
-                "50м Кроль", "100м Кроль", "200м Кроль", "400м Кроль",
-                "50м Брасс", "100м Брасс", "200м Брасс",
-                "50м Баттерфляй", "100м Баттерфляй",
-                "50м Спина", "100м Спина", "200м Спина"
+    private void showRandomTip() {
+        String[] tips = {
+                "Совет: Не забывайте делать разминку на суше перед прыжком в воду!",
+                "Совет: Держите голову ниже для лучшей обтекаемости.",
+                "Совет: Высокий локоть при гребке экономит силы.",
+                "Совет: Сильный удар ногами идет от бедра, а не от колена."
         };
-        ArrayAdapter<String> adapter = new ArrayAdapter<>(getContext(),
-                android.R.layout.simple_spinner_item, distances);
-        spinnerDistance.setAdapter(adapter);
+        tvSwimmingTip.setText(tips[new Random().nextInt(tips.length)]);
     }
 
-    // =======================
-    // SAVE & DELETE RESULTS
-    // =======================
-    private void saveMeasurement() {
-
-        String distanceStr = spinnerDistance.getSelectedItem().toString();
-        String result = distanceStr + " — " + tvTimer.getText();
-
-        results.add(result);
-
-        updateVolume();
-
-        updateStatsByStyle(distanceStr); // 🔥 НОВОЕ
-
-        saveResults();
-        updateAdapters();
+    private void getAIPlan() {
+        tvTodayTraining.setText("• 400м разминка кролем\n• 8x50м ускорение (отдых 30с)\n• 200м заминка");
+        tvTodayTraining.setTextColor(Color.parseColor("#102A43"));
     }
 
-    private void deleteMeasurement() {
-        int pos = listResults.getCheckedItemPosition();
-        if (pos != ListView.INVALID_POSITION) {
-            results.remove(pos);
-            saveResults();
-            updateAdapters();
+    private void showDateTimePicker() {
+        Calendar c = Calendar.getInstance();
+        new DatePickerDialog(getContext(), (v, y, m, d) -> {
+            new TimePickerDialog(getContext(), (v2, hh, mm) -> {
+                Toast.makeText(getContext(), "Тренировка запланирована!", Toast.LENGTH_SHORT).show();
+            }, c.get(Calendar.HOUR_OF_DAY), c.get(Calendar.MINUTE), true).show();
+        }, c.get(Calendar.YEAR), c.get(Calendar.MONTH), c.get(Calendar.DAY_OF_MONTH)).show();
+    }
+
+    private void deleteSelectedResult() {
+        if (selectedPosition != -1 && selectedPosition < allResults.size()) {
+            allResults.remove(selectedPosition);
+            saveData();
+            resultsAdapter.notifyDataSetChanged();
+            selectedPosition = -1;
+            Toast.makeText(getContext(), "Удалено", Toast.LENGTH_SHORT).show();
+        } else {
+            Toast.makeText(getContext(), "Выберите заплыв для удаления", Toast.LENGTH_SHORT).show();
         }
     }
 
-    private void updateVolume() {
-        String distance = spinnerDistance.getSelectedItem().toString();
-        if (distance.contains("50")) weeklyVolume += 50;
-        else if (distance.contains("100")) weeklyVolume += 100;
-        else if (distance.contains("200")) weeklyVolume += 200;
-        else if (distance.contains("400")) weeklyVolume += 400;
-
-        int progress = (weeklyVolume * 100) / weeklyGoal;
-        tvWeekProgress.setText("Прогресс недели: " + progress + "%");
+    private void setupDistances() {
+        String[] list = {"Кроль 50м", "Брасс 50м", "Спина 50м", "Батт 50м","Кроль 100м", "Брасс 100м", "Спина 100м", "Батт 100м","Комплекс 100м"};
+        spinnerDistance.setAdapter(new ArrayAdapter<>(getContext(), android.R.layout.simple_spinner_dropdown_item, list));
     }
 
-    private void saveResults() {
-        SharedPreferences.Editor editor = prefs.edit();
-        StringBuilder builder = new StringBuilder();
-        for (String r : results) builder.append(r).append(";");
-        editor.putString("results", builder.toString());
-        editor.apply();
+    private void saveData() {
+        prefs.edit().putString("measure_history_full", String.join(";", allResults)).apply();
+        if (tvStatsCount != null) tvStatsCount.setText("Всего заплывов: " + allResults.size());
     }
 
-    private void loadResults() {
-        String data = prefs.getString("results", "");
-        if (!data.equals("")) {
-            String[] items = data.split(";");
-            for (String i : items) results.add(i);
+    private void loadData() {
+        String data = prefs.getString("measure_history_full", "");
+        if (!data.isEmpty()) {
+            allResults.clear();
+            allResults.addAll(Arrays.asList(data.split(";")));
         }
-        updateAdapters();
+        if (tvStatsCount != null) tvStatsCount.setText("Всего заплывов: " + allResults.size());
+        resultsAdapter.notifyDataSetChanged();
     }
 
-    private void updateAdapters() {
-        resultsAdapter = new ArrayAdapter<>(getContext(),
-                android.R.layout.simple_list_item_single_choice, results);
-        listResults.setAdapter(resultsAdapter);
-
-        bestAdapter = new ArrayAdapter<>(getContext(),
-                android.R.layout.simple_list_item_1, results);
-        listBestResults.setAdapter(bestAdapter);
-    }
-    private void updateStatsByStyle(String distanceStr) {
-
-        SharedPreferences prefs = getActivity().getSharedPreferences("AquaTime", getContext().MODE_PRIVATE);
-
-        String style = "freestyle";
-
-        if (distanceStr.contains("Брасс")) style = "breast";
-        else if (distanceStr.contains("Баттерфляй")) style = "fly";
-        else if (distanceStr.contains("Спина")) style = "back";
-
-        int meters = 0;
-
-        if (distanceStr.contains("50")) meters = 50;
-        else if (distanceStr.contains("100")) meters = 100;
-        else if (distanceStr.contains("200")) meters = 200;
-        else if (distanceStr.contains("400")) meters = 400;
-
-        int total = prefs.getInt(style + "_meters", 0);
-        int trainings = prefs.getInt(style + "_trainings", 0);
-
-        prefs.edit()
-                .putInt(style + "_meters", total + meters)
-                .putInt(style + "_trainings", trainings + 1)
-                .apply();
-    }
-    // =======================
-    // AI TRAINER
-    // =======================
-    private void generateAITraining() {
-        String style = spinnerDistance.getSelectedItem().toString();
-        String training = "";
-
-        switch (style) {
-            case "50м Кроль": training = "Разминка 50м\n2x25 кроль\n50м расслабленно"; break;
-            case "100м Кроль": training = "Разминка 100м\n4x25 кроль\n100м техника"; break;
-            case "200м Кроль": training = "Разминка 200м\n4x50 кроль\n200м ноги"; break;
-            case "400м Кроль": training = "Разминка 400м\n8x50 кроль\n200м расслабленно"; break;
-            case "50м Брасс": training = "Разминка 50м\n2x25 брасс\n50м легко"; break;
-            case "100м Брасс": training = "Разминка 100м\n4x25 брасс\n100м техника"; break;
-            case "200м Брасс": training = "Разминка 200м\n4x50 брасс\n200м ноги"; break;
-            case "50м Баттерфляй": training = "Разминка 50м\n2x25 баттерфляй\n50м легко"; break;
-            case "100м Баттерфляй": training = "Разминка 100м\n4x25 баттерфляй\n100м техника"; break;
-            case "50м Спина": training = "Разминка 50м\n2x25 спина\n50м легко"; break;
-            case "100м Спина": training = "Разминка 100м\n4x25 спина\n100м техника"; break;
-            case "200м Спина": training = "Разминка 200м\n4x50 спина\n200м ноги"; break;
-            default: training = "Разминка 200м\n4x50 кроль\n100м легко";
-        }
-
-        tvTodayTraining.setText("AI Тренировка:\n" + training);
-    }
-
-    // =======================
-    // TRAINING HISTORY
-    // =======================
-    private void showTrainingHistory() {
-        StringBuilder sb = new StringBuilder("История тренировок:\n");
-        for (String r : results) sb.append(r).append("\n");
-        Toast.makeText(getContext(), sb.toString(), Toast.LENGTH_LONG).show();
-    }
-
-    // =======================
-    // CALENDAR
-    // =======================
-    private void setupCalendar() {
-        calendarTraining.setOnDateChangeListener((view, year, month, day) -> {
-            Calendar calendar = Calendar.getInstance();
-            TimePickerDialog dialog = new TimePickerDialog(
-                    getContext(),
-                    (timePicker, hour, minute) -> {
-                        String date = day + "/" + (month + 1) + "/" + year + " " + hour + ":" + minute;
-                        tvTodayTraining.setText("Тренировка: " + date);
-                    },
-                    calendar.get(Calendar.HOUR_OF_DAY),
-                    calendar.get(Calendar.MINUTE),
-                    true
-            );
-            dialog.show();
+    private void setupRecyclerViews() {
+        rvResults.setLayoutManager(new LinearLayoutManager(getContext()));
+        resultsAdapter = new ResultsAdapter(allResults, pos -> {
+            selectedPosition = pos;
+            resultsAdapter.notifyDataSetChanged();
         });
+        rvResults.setAdapter(resultsAdapter);
+    }
+
+
+    private class ResultsAdapter extends RecyclerView.Adapter<ResultsAdapter.ViewHolder> {
+        private final ArrayList<String> mData;
+        private final OnResultClickListener listener;
+
+        ResultsAdapter(ArrayList<String> data, OnResultClickListener listener) {
+            this.mData = data;
+            this.listener = listener;
+        }
+
+        @NonNull @Override public ViewHolder onCreateViewHolder(@NonNull ViewGroup p, int t) {
+            View v = LayoutInflater.from(p.getContext()).inflate(android.R.layout.simple_list_item_1, p, false);
+            return new ViewHolder(v);
+        }
+
+        @Override
+        public void onBindViewHolder(@NonNull ViewHolder h, int pos) {
+            h.textView.setText(mData.get(pos));
+            h.textView.setTextSize(android.util.TypedValue.COMPLEX_UNIT_SP, 14);
+            h.itemView.setBackgroundColor(pos == selectedPosition ? Color.parseColor("#E3F2FD") : Color.TRANSPARENT);
+            h.itemView.setOnClickListener(v -> listener.onItemClick(pos));
+        }
+
+        @Override public int getItemCount() { return mData.size(); }
+
+        class ViewHolder extends RecyclerView.ViewHolder {
+            TextView textView;
+            ViewHolder(View v) { super(v); textView = v.findViewById(android.R.id.text1); }
+        }
     }
 }

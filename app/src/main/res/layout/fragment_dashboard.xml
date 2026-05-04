@@ -1,132 +1,213 @@
 <?xml version="1.0" encoding="utf-8"?>
-<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+<androidx.core.widget.NestedScrollView xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@drawable/bg_gradient"
-    android:padding="16dp">
+    android:background="#F8FBFF"
+    android:fillViewport="true">
 
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:orientation="vertical">
+        android:orientation="vertical"
+        android:padding="20dp">
 
+        <TextView
+            android:id="@+id/tv_greeting"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="24dp"
+            android:textColor="#102A43"
+            android:textSize="26sp"
+            android:textStyle="bold" />
 
-
-        <!-- Карточка статистики за день -->
-        <LinearLayout
+        <androidx.cardview.widget.CardView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:background="@android:color/white"
-            android:orientation="vertical"
-            android:padding="16dp"
+            app:cardCornerRadius="32dp"
+            app:cardElevation="2dp"
+            android:layout_marginBottom="20dp">
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:padding="24dp"
+                android:background="#FFF3E0"
+                android:gravity="center_vertical">
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="🔥"
+                    android:textSize="32sp" />
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:layout_marginStart="16dp">
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="УДАРНЫЙ РЕЖИМ"
+                        android:textColor="#E65100"
+                        android:textSize="12sp"
+                        android:textStyle="bold"
+                        android:letterSpacing="0.1"/>
+                    <TextView
+                        android:id="@+id/tv_streak_count_text"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:textColor="#BF360C"
+                        android:textSize="20sp"
+                        android:textStyle="bold" />
+                </LinearLayout>
+            </LinearLayout>
+        </androidx.cardview.widget.CardView>
+
+        <androidx.cardview.widget.CardView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
             android:layout_marginBottom="20dp"
-            android:elevation="4dp">
-
-            <TextView
-                android:layout_width="wrap_content"
+            app:cardCornerRadius="32dp">
+            <LinearLayout
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="Сегодняшняя тренировка"
-                android:textSize="18sp"
-                android:textStyle="bold"
-                android:textColor="@color/text_primary"
-                android:layout_marginBottom="10dp"/>
+                android:orientation="vertical"
+                android:padding="24dp">
+                <RelativeLayout android:layout_width="match_parent" android:layout_height="wrap_content">
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="ПОСЛЕДНЯЯ ТРЕНИРОВКА"
+                        android:textColor="#546E7A"
+                        android:textStyle="bold"
+                        android:textSize="12sp"
+                        android:letterSpacing="0.1"/>
+                    <TextView
+                        android:id="@+id/tv_last_date"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_alignParentEnd="true"
+                        android:textColor="#90A4AE"
+                        android:textSize="12sp" />
+                </RelativeLayout>
+                <TextView
+                    android:id="@+id/tv_last_distance"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:textColor="#102A43"
+                    android:textSize="36sp"
+                    android:layout_marginTop="8dp"
+                    android:textStyle="bold" />
+            </LinearLayout>
+        </androidx.cardview.widget.CardView>
 
-            <TextView
-                android:id="@+id/tv_today_distance"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="Дистанция: 0 м"
-                android:textColor="@color/text_secondary"/>
-
-            <TextView
-                android:id="@+id/tv_today_time"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="Время: 0:00"
-                android:textColor="@color/text_secondary"/>
-
-            <TextView
-                android:id="@+id/tv_today_speed"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="Скорость: 0 м/с"
-                android:textColor="@color/text_secondary"/>
-        </LinearLayout>
-
-        <!-- Кнопка начала тренировки -->
-        <Button
-            android:id="@+id/btn_start_training"
+        <androidx.cardview.widget.CardView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="🏁 Начать тренировку"
-            android:backgroundTint="@color/aqua_accent"
-            android:textColor="@android:color/white"
-            android:textSize="18sp"
-            android:layout_marginBottom="20dp" />
+            app:cardCornerRadius="32dp"
+            android:layout_marginBottom="20dp">
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:padding="24dp"
+                android:gravity="center"
+                android:orientation="horizontal">
+                <RelativeLayout android:layout_width="90dp" android:layout_height="90dp">
+                    <ProgressBar
+                        android:id="@+id/ring_dist"
+                        style="?android:attr/progressBarStyleHorizontal"
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent"
+                        android:progressDrawable="@drawable/ring_blue"/>
+                    <ProgressBar
+                        android:id="@+id/ring_count"
+                        style="?android:attr/progressBarStyleHorizontal"
+                        android:layout_width="65dp"
+                        android:layout_height="65dp"
+                        android:layout_centerInParent="true"
+                        android:progressDrawable="@drawable/ring_cyan"/>
+                </RelativeLayout>
+                <LinearLayout
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:layout_marginStart="24dp">
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="ЦЕЛИ НЕДЕЛИ"
+                        android:textColor="#102A43"
+                        android:textSize="18sp"
+                        android:textStyle="bold" />
+                    <TextView
+                        android:id="@+id/tv_weekly_status_text"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:textColor="#546E7A" />
+                </LinearLayout>
+            </LinearLayout>
+        </androidx.cardview.widget.CardView>
 
-        <!-- Блок советов -->
+        <androidx.cardview.widget.CardView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            app:cardCornerRadius="32dp"
+            android:layout_marginBottom="32dp">
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:padding="24dp"
+                android:background="#E3F2FD">
+                <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="💡" android:textSize="26sp"/>
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:layout_marginStart="16dp">
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="СОВЕТ ТРЕНЕРА"
+                        android:textStyle="bold"
+                        android:textColor="#1565C0"
+                        android:textSize="12sp"
+                        android:letterSpacing="0.1"/>
+                    <TextView
+                        android:id="@+id/tv_daily_tip_text"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:textColor="#1E88E5"
+                        android:layout_marginTop="4dp" />
+                </LinearLayout>
+            </LinearLayout>
+        </androidx.cardview.widget.CardView>
+
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:orientation="vertical"
-            android:background="@drawable/card_background"
-            android:padding="16dp"
-            android:elevation="3dp"
-            android:layout_marginBottom="20dp">
-
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="💬 Совет дня"
-                android:textSize="18sp"
-                android:textStyle="bold"
-                android:textColor="@color/text_primary" />
-
-            <TextView
-                android:id="@+id/tv_tip"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:text="Работай над дыханием и длинной гребка — это повысит твою эффективность."
-                android:textColor="@color/text_secondary"
-                android:layout_marginTop="8dp"/>
+            android:orientation="horizontal"
+            android:layout_marginBottom="10dp">
+            <Button
+                android:id="@+id/btn_to_workout"
+                android:layout_width="0dp"
+                android:layout_height="55dp"
+                android:layout_weight="1"
+                android:layout_marginEnd="8dp"
+                android:backgroundTint="#1E88E5"
+                android:text="К тренировке"
+                android:textAllCaps="false"
+                android:textColor="#FFFFFF" />
+            <Button
+                android:id="@+id/btn_to_analytics"
+                android:layout_width="0dp"
+                android:layout_height="55dp"
+                android:layout_weight="1"
+                android:layout_marginStart="8dp"
+                android:backgroundTint="#E3F2FD"
+                android:text="К аналитике"
+                android:textAllCaps="false"
+                android:textColor="#1E88E5" />
         </LinearLayout>
-
-        <!-- Карточка достижений -->
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="vertical"
-            android:background="@drawable/card_background"
-            android:padding="16dp"
-            android:elevation="3dp"
-            android:layout_marginBottom="20dp">
-
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="🏅 Твои достижения"
-                android:textSize="18sp"
-                android:textStyle="bold"
-                android:textColor="@color/text_primary" />
-
-            <TextView
-                android:id="@+id/tv_achievements"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:text="🥇 Проплыл 100 км!\n🔥 5 дней подряд без пропусков!"
-                android:textColor="@color/text_secondary"
-                android:layout_marginTop="8dp"/>
-        </LinearLayout>
-
-        <!-- Кнопка истории -->
-        <Button
-            android:id="@+id/btn_history"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="📖 История тренировок"
-            android:backgroundTint="@color/aqua_primary"
-            android:textColor="@android:color/white" />
 
     </LinearLayout>
-</ScrollView>
+</androidx.core.widget.NestedScrollView>

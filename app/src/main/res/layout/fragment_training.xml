@@ -1,9 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
-<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+<androidx.core.widget.NestedScrollView xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@drawable/bg_gradient">
+    android:background="#F0F8FF"
+    android:fillViewport="true">
 
     <LinearLayout
         android:layout_width="match_parent"
@@ -11,194 +12,238 @@
         android:orientation="vertical"
         android:padding="16dp">
 
-        <!-- Совет дня -->
-        <TextView
-            android:id="@+id/tv_tip"
+        <androidx.cardview.widget.CardView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="Совет дня"
-            android:textSize="20sp"
-            android:textStyle="bold"
-            android:textColor="@android:color/black"
-            android:layout_marginBottom="8dp"/>
+            android:layout_marginBottom="16dp"
+            app:cardCornerRadius="20dp"
+            app:cardElevation="2dp">
 
-        <TextView
-            android:id="@+id/tv_tip_text"
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:padding="16dp">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="💡 Совет дня"
+                    android:textColor="#1976D2"
+                    android:textStyle="bold" />
+
+                <TextView
+                    android:id="@+id/tv_swimming_tip"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="4dp"
+                    android:text="Совет: Не забывайте делать разминку на суше перед прыжком в воду!"
+                    android:textColor="#102A43" />
+            </LinearLayout>
+        </androidx.cardview.widget.CardView>
+
+        <androidx.cardview.widget.CardView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="Сегодня попробуй работать над техникой."
-            android:textSize="16sp"
-            android:layout_marginBottom="16dp"/>
+            android:layout_marginBottom="16dp"
+            app:cardCornerRadius="20dp"
+            app:cardElevation="2dp">
 
-        <!-- Настроение -->
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Какое у тебя настроение?"
-            android:textSize="18sp"
-            android:layout_marginBottom="8dp"/>
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:padding="16dp">
 
-        <Spinner
-            android:id="@+id/spinner_mood"
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="План тренировки"
+                    android:textColor="#1976D2"
+                    android:textSize="18sp"
+                    android:textStyle="bold" />
+
+                <TextView
+                    android:id="@+id/tv_today_training"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="8dp"
+                    android:gravity="center"
+                    android:text="Нажми на робота для генерации плана"
+                    android:textColor="#9E9E9E" />
+
+                <Button
+                    android:id="@+id/btn_start_training"
+                    style="@style/Widget.MaterialComponents.Button.TextButton"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="center"
+                    android:layout_marginTop="12dp"
+                    android:text="🤖 ПЛАН НА СЕГОДНЯ" />
+
+                <View
+                    android:layout_width="match_parent"
+                    android:layout_height="1dp"
+                    android:layout_marginVertical="12dp"
+                    android:background="#EEEEEE" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="🛠 Собрать свою тренировку"
+                    android:textColor="#1976D2"
+                    android:textStyle="bold" />
+
+                <EditText
+                    android:id="@+id/et_manual_dist"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="8dp"
+                    android:background="@null"
+                    android:hint="Например: 4x50м кроль через 15с"
+                    android:padding="8dp"
+                    android:textSize="14sp" />
+
+                <Button
+                    android:id="@+id/btn_save_manual_training"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="8dp"
+                    android:text="ДОБАВИТЬ В МОЙ ПЛАН"
+                    app:backgroundTint="#008CFF"
+                    app:cornerRadius="12dp" />
+
+                <Button
+                    android:id="@+id/btn_open_calendar"
+                    style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="8dp"
+                    android:text="📅 ЗАПЛАНИРОВАТЬ"
+                    app:cornerRadius="12dp" />
+            </LinearLayout>
+        </androidx.cardview.widget.CardView>
+
+        <androidx.cardview.widget.CardView
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"/>
-
-        <!-- План тренировки -->
-        <TextView
-            android:id="@+id/tv_today_training"
-            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="Сегодняшняя тренировка"
-            android:textSize="18sp"
-            android:textStyle="bold"
-            android:layout_marginTop="20dp"/>
+            android:layout_marginBottom="16dp"
+            app:cardCornerRadius="24dp"
+            app:cardElevation="2dp">
 
-        <Button
-            android:id="@+id/btn_start_training"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="Начать тренировку"
-            android:layout_marginTop="8dp"/>
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:gravity="center"
+                android:orientation="vertical"
+                android:padding="20dp">
 
-        <Button
-            android:id="@+id/btn_training_history"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="История тренировок"
-            android:layout_marginTop="8dp"/>
+                <TextView
+                    android:id="@+id/tv_timer"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:fontFamily="sans-serif-light"
+                    android:text="00:00:00"
+                    android:textColor="#102A43"
+                    android:textSize="56sp" />
 
-        <!-- Календарь -->
-        <TextView
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="Календарь тренировок"
-            android:textSize="20sp"
-            android:textStyle="bold"
-            android:layout_marginTop="24dp"/>
+                <LinearLayout
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="16dp">
 
-        <CalendarView
-            android:id="@+id/calendar_training"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="10dp"/>
+                    <Button
+                        android:id="@+id/btn_start_timer"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginEnd="8dp"
+                        android:backgroundTint="#4CAF50"
+                        android:text="СТАРТ"
+                        app:cornerRadius="16dp" />
 
-        <!-- Прогресс недели -->
-        <TextView
-            android:id="@+id/tv_week_progress"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="Прогресс недели: 0%"
-            android:textSize="18sp"
-            android:layout_marginTop="10dp"
-            android:textStyle="bold"/>
+                    <Button
+                        android:id="@+id/btn_stop_timer"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginEnd="8dp"
+                        android:backgroundTint="#F44336"
+                        android:text="ПАУЗА"
+                        app:cornerRadius="16dp" />
 
-        <!-- Секундомер -->
-        <TextView
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="Секундомер"
-            android:textSize="20sp"
-            android:textStyle="bold"
-            android:layout_marginTop="24dp"/>
+                    <Button
+                        android:id="@+id/btn_reset_timer"
+                        style="@style/Widget.MaterialComponents.Button.TextButton"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="СБРОС"
+                        android:textColor="#9E9E9E" />
+                </LinearLayout>
 
-        <TextView
-            android:id="@+id/tv_timer"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="00:00:00.000"
-            android:textSize="32sp"
-            android:gravity="center"
-            android:layout_marginTop="8dp"/>
+                <View
+                    android:layout_width="match_parent"
+                    android:layout_height="1dp"
+                    android:layout_marginVertical="20dp"
+                    android:background="#EEEEEE" />
+
+                <Spinner
+                    android:id="@+id/spinner_distance"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="start" />
+
+                <Button
+                    android:id="@+id/btn_save_measure"
+                    android:layout_width="match_parent"
+                    android:layout_height="60dp"
+                    android:layout_marginTop="16dp"
+                    android:text="💾 СОХРАНИТЬ РЕЗУЛЬТАТ"
+                    android:textSize="16sp"
+                    app:backgroundTint="#008CFF"
+                    app:cornerRadius="16dp" />
+            </LinearLayout>
+        </androidx.cardview.widget.CardView>
 
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:orientation="horizontal"
-            android:gravity="center"
-            android:layout_marginTop="10dp">
+            android:orientation="horizontal">
 
-            <Button
-                android:id="@+id/btn_start_timer"
+            <TextView
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="🕒 Последние заплывы"
+                android:textColor="#1976D2"
+                android:textStyle="bold" />
+
+            <TextView
+                android:id="@+id/tv_stats_count"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Старт"/>
-
-            <Button
-                android:id="@+id/btn_stop_timer"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="Стоп"
-                android:layout_marginStart="10dp"/>
-
-            <Button
-                android:id="@+id/btn_reset_timer"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="Сброс"
-                android:layout_marginStart="10dp"/>
+                android:text="Всего заплывов: 1"
+                android:textColor="#9E9E9E"
+                android:textSize="12sp" />
         </LinearLayout>
 
-        <!-- Выбор дистанции -->
-        <TextView
+        <androidx.recyclerview.widget.RecyclerView
+            android:id="@+id/rv_results"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="Выбери стиль и дистанцию"
-            android:textSize="18sp"
-            android:layout_marginTop="20dp"/>
+            android:layout_marginTop="8dp"
+            android:nestedScrollingEnabled="false" />
 
-        <Spinner
-            android:id="@+id/spinner_distance"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"/>
-
-        <!-- Сохранение результата -->
-        <Button
-            android:id="@+id/btn_save_measure"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="Сохранить замер"
-            android:layout_marginTop="10dp"/>
-
-        <!-- История замеров -->
-        <TextView
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="История замеров"
-            android:textSize="20sp"
-            android:textStyle="bold"
-            android:layout_marginTop="24dp"/>
-
-        <ListView
-            android:id="@+id/list_results"
-            android:layout_width="match_parent"
-            android:layout_height="200dp"
-            android:choiceMode="singleChoice"
-            android:background="@android:color/white"
-            android:layout_marginTop="8dp"/>
-
-        <!-- Удалить выбранный замер -->
         <Button
             android:id="@+id/btn_delete_measure"
+            style="@style/Widget.MaterialComponents.Button.TextButton"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="Удалить выбранный замер"
-            android:layout_marginTop="10dp"/>
+            android:layout_marginTop="8dp"
+            android:text="🗑 УДАЛИТЬ ВЫБРАННЫЙ ЗАМЕР"
+            android:textColor="#F44336" />
 
-        <!-- Лучшие результаты -->
-        <TextView
+        <View
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="Лучшие результаты"
-            android:textSize="20sp"
-            android:textStyle="bold"
-            android:layout_marginTop="24dp"/>
-
-        <ListView
-            android:id="@+id/list_best_results"
-            android:layout_width="match_parent"
-            android:layout_height="200dp"
-            android:background="@android:color/white"
-            android:layout_marginTop="8dp"/>
+            android:layout_height="50dp" />
 
     </LinearLayout>
-</ScrollView>
+</androidx.core.widget.NestedScrollView>

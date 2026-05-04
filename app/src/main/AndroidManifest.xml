@@ -24,11 +24,10 @@
         <!-- Основное приложение -->
         <activity android:name=".MainActivity" />
         <!-- Экран первого ввода данных -->
-        <activity android:name=".UserSetupActivity" />
+        <activity android:name=".LoginActivity" />
         <activity android:name=".EditProfileActivity" />
-        <receiver
-            android:name=".ui.training.TrainingReminderReceiver"
-            android:exported="true" />
+        <receiver android:name=".ui.training.TrainingReminderReceiver"
+                  android:exported="false" />
 
     </application>
 </manifest>

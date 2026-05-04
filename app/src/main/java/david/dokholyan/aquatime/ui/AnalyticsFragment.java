@@ -1,78 +1,220 @@
 package david.dokholyan.aquatime.ui;
 
+import android.content.Context;
 import android.content.SharedPreferences;
+import android.graphics.Color;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.LinearLayout;
 import android.widget.TextView;
+import android.widget.Toast;
+
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
 import androidx.navigation.Navigation;
+
 import david.dokholyan.aquatime.R;
+
+import java.text.SimpleDateFormat;
+import java.util.Calendar;
+import java.util.Date;
+import java.util.Locale;
 
 public class AnalyticsFragment extends Fragment {
 
+    private SharedPreferences prefs;
+    private TextView tvTotalDist, tvTotalTime, tvHistory, tvPlanner;
+    private EditText etGoal;
+    private LinearLayout ranksContainer;
+    private ProgressChartView chartDist, chartTime;
+    private boolean isExpanded = false;
+
+
+    private final String[] styles = {"Вольный стиль", "Брасс", "На спине", "Баттерфляй", "Комплекс"};
+    private final String[] rankNames = {"III юн", "II юн", "I юн", "III", "II", "I", "КМС", "МС", "МСМК"};
+
+    private final double[][] norms = {
+            {55.25, 45.25, 35.25, 29.25, 27.05, 24.85, 23.40, 22.50, 21.20}, // Вольный
+            {66.25, 56.25, 46.25, 37.25, 34.05, 31.85, 29.40, 28.10, 26.60}, // Брасс
+            {62.25, 52.25, 42.25, 34.25, 31.05, 28.85, 26.90, 25.50, 24.00}, // Спина
+            {58.25, 48.25, 38.25, 31.25, 29.05, 26.85, 25.40, 24.20, 22.80}, // Батт
+            {135.0, 115.0, 102.0, 74.50, 69.50, 64.20, 59.50, 56.40, 53.60}  // Комплекс
+    };
+
     @Nullable
     @Override
-    public View onCreateView(@NonNull LayoutInflater inflater,
-                             @Nullable ViewGroup container,
-                             @Nullable Bundle savedInstanceState) {
-        View view = inflater.inflate(R.layout.fragment_analytics, container, false);
+    public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
+        View v = inflater.inflate(R.layout.fragment_analytics, container, false);
+        prefs = requireActivity().getSharedPreferences("AquaTime", Context.MODE_PRIVATE);
 
-        TextView totalDistance = view.findViewById(R.id.tv_total_distance);
-        TextView avgSpeed = view.findViewById(R.id.tv_avg_speed);
-        TextView totalTime = view.findViewById(R.id.tv_total_time);
-        TextView historyList = view.findViewById(R.id.tv_history_list);
-        TextView plannerList = view.findViewById(R.id.tv_planner_list);
-        EditText trainingGoal = view.findViewById(R.id.et_training_goal);
-        Button addTraining = view.findViewById(R.id.btn_add_training);
-        Button openHistory = view.findViewById(R.id.btn_open_history);
-        Button openChampions = view.findViewById(R.id.btn_open_champions);
+        initViews(v);
+        calculateWeeklyStats();
+        showRanks(0, 3);
 
-        // Загружаем статистику из SharedPreferences
-        SharedPreferences prefs = requireActivity()
-                .getSharedPreferences("training_data", getContext().MODE_PRIVATE);
-        int distance = prefs.getInt("distance", 0);
-        int time = prefs.getInt("time", 0);
-        float speed = prefs.getFloat("speed", 0f);
+        v.findViewById(R.id.btn_toggle_ranks).setOnClickListener(view -> toggleRanks((Button) view));
+        v.findViewById(R.id.btn_add_goal).setOnClickListener(view -> addGoal());
 
-        totalDistance.setText(distance + " м");
-        totalTime.setText(String.format("%02d:%02d", time / 60, time % 60));
-        avgSpeed.setText(String.format("%.2f м/с", speed));
+        v.findViewById(R.id.btn_open_history).setOnClickListener(view ->
+                Navigation.findNavController(view).navigate(R.id.historyFragment));
 
-        // Короткая история (короткий блок)
-        String history = prefs.getString("history", "Пока нет завершённых тренировок");
-        historyList.setText(history);
+        v.findViewById(R.id.btn_open_champions).setOnClickListener(view ->
+                Navigation.findNavController(view).navigate(R.id.championsFragment));
 
-        // Планировщик
-        String planner = prefs.getString("planner", "Нет запланированных тренировок");
-        plannerList.setText(planner);
+        return v;
+    }
 
-        addTraining.setOnClickListener(v -> {
-            String goal = trainingGoal.getText().toString().trim();
-            if (!goal.isEmpty()) {
-                String existing = prefs.getString("planner", "");
-                String updated = existing + "• " + goal + "\n";
-                prefs.edit().putString("planner", updated).apply();
-                plannerList.setText(updated);
-                trainingGoal.setText("");
-            }
-        });
+    private void initViews(View v) {
+        tvTotalDist = v.findViewById(R.id.tv_total_distance);
+        tvTotalTime = v.findViewById(R.id.tv_total_time);
+        tvHistory = v.findViewById(R.id.tv_history_summary);
+        tvPlanner = v.findViewById(R.id.tv_planner_list);
+        etGoal = v.findViewById(R.id.et_training_goal);
+        ranksContainer = v.findViewById(R.id.ranks_container);
+        chartDist = v.findViewById(R.id.chart_dist_weekly);
+        chartTime = v.findViewById(R.id.chart_time_weekly);
 
-        // Переход на отдельный экран Истории (через NavController)
-        openHistory.setOnClickListener(v ->
-                Navigation.findNavController(v).navigate(R.id.historyFragment)
-        );
+        tvPlanner.setText(prefs.getString("planner", "Нет запланированных целей"));
+    }
 
-        // Переход на отдельный экран Советов чемпионов (через NavController)
-        openChampions.setOnClickListener(v ->
-                Navigation.findNavController(v).navigate(R.id.championsFragment)
-        );
+    private void calculateWeeklyStats() {
+        String data = prefs.getString("all_res", "");
+        if (data.isEmpty()) return;
 
-        return view;
+        String[] entries = data.split(";");
+        float[] weeklyDist = new float[7];
+        float[] weeklyTime = new float[7];
+        int totalWeeklyDist = 0;
+        long totalWeeklySecs = 0;
+
+        SimpleDateFormat sdf = new SimpleDateFormat("dd.MM.yyyy", Locale.getDefault());
+        Calendar now = Calendar.getInstance();
+
+        for (String entry : entries) {
+            try {
+                String[] p = entry.split("\\|");
+                Date date = sdf.parse(p[2].trim());
+                Calendar cal = Calendar.getInstance();
+                cal.setTime(date);
+
+                if (cal.get(Calendar.WEEK_OF_YEAR) == now.get(Calendar.WEEK_OF_YEAR)) {
+                    int d = Integer.parseInt(p[0].trim());
+                    String[] t = p[1].trim().split(":");
+                    int m = Integer.parseInt(t[0]);
+                    int s = Integer.parseInt(t[1]);
+
+                    int day = (cal.get(Calendar.DAY_OF_WEEK) + 5) % 7;
+                    weeklyDist[day] += d;
+                    weeklyTime[day] += (m + s / 60f);
+
+                    totalWeeklyDist += d;
+                    totalWeeklySecs += (m * 60 + s);
+                }
+            } catch (Exception ignored) {}
+        }
+
+        chartDist.setData(weeklyDist, 1);
+        chartTime.setData(weeklyTime, 0);
+
+        tvTotalDist.setText(totalWeeklyDist + " м");
+        tvTotalTime.setText(String.format(Locale.getDefault(), "%02d:%02d", totalWeeklySecs / 60, totalWeeklySecs % 60));
+
+        String lastEntry = entries[0].replace("|", " — ");
+        tvHistory.setText("Последняя: " + lastEntry);
+    }
+
+    private void showRanks(int start, int end) {
+        for (int i = start; i < end; i++) {
+            final int styleIdx = i;
+            View card = getLayoutInflater().inflate(R.layout.item_rank_card, ranksContainer, false);
+            ((TextView) card.findViewById(R.id.tv_rank_style)).setText(styles[i]);
+
+            String bestTime;
+            if (i == 0) bestTime = getMinTime("best_style_0", "best_style_4"); // Кроль
+            else if (i == 1) bestTime = getMinTime("best_style_1", "best_style_5"); // Брасс
+            else if (i == 2) bestTime = getMinTime("best_style_2", "best_style_6"); // Спина
+            else if (i == 3) bestTime = getMinTime("best_style_3", "best_style_7"); // Батт
+            else bestTime = prefs.getString("best_style_8", "99:99:99"); // Комплекс
+
+            if (bestTime.equals("99:99:99")) bestTime = "00:00:00";
+
+            ((TextView) card.findViewById(R.id.tv_rank_best)).setText("Рекорд: " + bestTime);
+
+            Button btnMore = card.findViewById(R.id.btn_rank_more);
+            LinearLayout details = card.findViewById(R.id.rank_detail_list);
+
+            String finalBestTime = bestTime;
+            btnMore.setOnClickListener(view -> {
+                if (details.getVisibility() == View.GONE) {
+                    details.setVisibility(View.VISIBLE);
+                    btnMore.setText("Скрыть");
+                    fillRankDetails(details, norms[styleIdx], parseTimeToSeconds(finalBestTime));
+                } else {
+                    details.setVisibility(View.GONE);
+                    btnMore.setText("Подробнее");
+                }
+            });
+            ranksContainer.addView(card);
+        }
+    }
+
+
+    private String getMinTime(String key1, String key2) {
+        String t1 = prefs.getString(key1, "99:99:99");
+        String t2 = prefs.getString(key2, "99:99:99");
+        return (parseTimeToSeconds(t1) < parseTimeToSeconds(t2)) ? t1 : t2;
+    }
+
+    private void fillRankDetails(LinearLayout container, double[] normArr, double userSec) {
+        container.removeAllViews();
+        for (int i = 0; i < normArr.length; i++) {
+            TextView tv = new TextView(getContext());
+            boolean isOk = (userSec > 0 && userSec <= normArr[i]);
+            String status = isOk ? " ✅" : "";
+            tv.setText(rankNames[i] + ": " + normArr[i] + "с" + status);
+            tv.setPadding(0, 4, 0, 4);
+
+            tv.setTextColor(isOk ? Color.parseColor("#1976D2") : Color.GRAY);
+            container.addView(tv);
+        }
+    }
+
+    private void toggleRanks(Button btn) {
+        if (!isExpanded) {
+            showRanks(3, styles.length);
+            btn.setText("СКРЫТЬ");
+            isExpanded = true;
+        } else {
+            ranksContainer.removeViews(3, ranksContainer.getChildCount() - 3);
+            btn.setText("ПОКАЗАТЬ ВСЕ СТИЛИ");
+            isExpanded = false;
+        }
+    }
+
+    private void addGoal() {
+        String goal = etGoal.getText().toString().trim();
+        if (!goal.isEmpty()) {
+            String current = prefs.getString("planner", "");
+            String updated = "• " + goal + "\n" + current;
+            prefs.edit().putString("planner", updated).apply();
+            tvPlanner.setText(updated);
+            etGoal.setText("");
+            Toast.makeText(getContext(), "Цель добавлена", Toast.LENGTH_SHORT).show();
+        }
+    }
+
+    private double parseTimeToSeconds(String timeStr) {
+        try {
+            if (timeStr.equals("00:00:00") || timeStr.equals("99:99:99")) return 9999.0;
+            String[] parts = timeStr.split(":");
+            int min = Integer.parseInt(parts[0]);
+            int sec = Integer.parseInt(parts[1]);
+            int ms = Integer.parseInt(parts[2]);
+            return min * 60 + sec + ms / 100.0;
+        } catch (Exception e) { return 9999.0; }
     }
 }

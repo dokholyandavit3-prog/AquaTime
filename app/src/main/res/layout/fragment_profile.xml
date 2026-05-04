@@ -1,166 +1,217 @@
 <?xml version="1.0" encoding="utf-8"?>
-<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+<androidx.core.widget.NestedScrollView xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@drawable/bg_gradient"
-    android:padding="16dp">
+    android:background="@color/aqua_light">
 
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:gravity="center_horizontal"
         android:orientation="vertical"
-        android:gravity="center_horizontal">
+        android:padding="20dp">
 
-        <!-- 🔥 АВАТАР -->
         <com.google.android.material.imageview.ShapeableImageView
             android:id="@+id/img_avatar"
-            android:layout_width="120dp"
-            android:layout_height="120dp"
-            android:scaleType="centerCrop"
-            android:src="@drawable/avatar_swim_1"
+            android:layout_width="150dp"
+            android:layout_height="150dp"
+            android:layout_marginTop="20dp"
+            android:background="@android:color/white"
+            android:elevation="12dp"
+            android:padding="10dp"
+            android:scaleType="centerInside"
+            app:contentPadding="12dp"
             app:shapeAppearanceOverlay="@style/CircleImage"
-            android:layout_marginBottom="16dp"/>
+            app:strokeColor="@color/aqua_primary"
+            app:strokeWidth="4dp" />
 
-        <!-- 👤 ИМЯ -->
         <TextView
             android:id="@+id/tv_name"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Имя"
-            android:textSize="22sp"
-            android:textStyle="bold"
-            android:textColor="@android:color/black"
-            android:layout_marginBottom="6dp"/>
+            android:layout_marginTop="16dp"
+            android:text="David"
+            android:textColor="@color/aqua_deep"
+            android:textSize="24sp"
+            android:textStyle="bold" />
 
-        <!-- 📧 EMAIL -->
         <TextView
             android:id="@+id/tv_email"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="email"
-            android:textSize="14sp"
-            android:layout_marginBottom="10dp"/>
+            android:layout_marginBottom="12dp"
+            android:text="davdokholyan2011@gmail.com"
+            android:textColor="@android:color/darker_gray"
+            android:textSize="14sp" />
 
-        <!-- 📊 ДАННЫЕ -->
-        <TextView
-            android:id="@+id/tv_age_weight"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Рост/Вес"
-            android:textSize="16sp"
-            android:gravity="center"
-            android:layout_marginBottom="10dp"/>
-
-        <!-- 🏆 ДОСТИЖЕНИЯ -->
-        <TextView
-            android:id="@+id/tv_achievements"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="Достижения"
-            android:gravity="center"
-            android:layout_marginBottom="12dp"/>
-
-        <!-- ⚡ УРОВЕНЬ -->
         <TextView
             android:id="@+id/tv_level"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Уровень"
-            android:textSize="16sp"
-            android:textStyle="bold"
-            android:layout_marginBottom="6dp"/>
+            android:text="Уровень: Pro 🟣"
+            android:textColor="@color/aqua_primary"
+            android:textStyle="italic" />
 
-        <!-- ⭐ РЕЙТИНГ -->
         <TextView
-            android:id="@+id/tv_rating"
+            android:id="@+id/tv_country"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Рейтинг"
-            android:textSize="16sp"
-            android:textStyle="bold"
-            android:layout_marginBottom="16dp"/>
+            android:text="📍 Армения 🇦🇲"
+            android:textColor="#757575"
+            android:textSize="14sp" />
 
-        <!-- 🏊 РЕЙТИНГ ПО СТИЛЯМ -->
-        <LinearLayout
+        <com.google.android.material.card.MaterialCardView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:orientation="vertical"
-            android:background="@android:color/white"
-            android:padding="12dp"
-            android:layout_marginBottom="16dp">
+            android:layout_marginTop="24dp"
+            app:cardBackgroundColor="@color/aqua_primary"
+            app:cardCornerRadius="24dp"
+            app:cardElevation="6dp">
 
-            <TextView
-                android:layout_width="wrap_content"
+            <LinearLayout
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="🏆 Рейтинг по стилям"
-                android:textStyle="bold"
-                android:textSize="16sp"
-                android:layout_marginBottom="8dp"/>
+                android:gravity="center"
+                android:orientation="vertical"
+                android:padding="20dp">
 
-            <TextView
-                android:id="@+id/tv_freestyle"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="Кроль"/>
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:letterSpacing="0.1"
+                    android:text="ВАШ ОБЩИЙ РЕЙТИНГ"
+                    android:textColor="#CCFFFFFF"
+                    android:textSize="12sp" />
 
-            <TextView
-                android:id="@+id/tv_breast"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="Брасс"/>
+                <TextView
+                    android:id="@+id/tv_main_rating"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="0"
+                    android:textColor="@android:color/white"
+                    android:textSize="48sp"
+                    android:textStyle="bold" />
+            </LinearLayout>
+        </com.google.android.material.card.MaterialCardView>
 
-            <TextView
-            android:id="@+id/tv_fly"
-            android:layout_width="wrap_content"
+        <com.google.android.material.card.MaterialCardView
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="Баттерфляй"/>
+            android:layout_marginTop="16dp"
+            app:cardCornerRadius="16dp"
+            app:cardElevation="2dp">
 
-            <TextView
-                android:id="@+id/tv_back"
-                android:layout_width="wrap_content"
+            <LinearLayout
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="Спина"/>
-        </LinearLayout>
+                android:orientation="vertical"
+                android:padding="16dp">
 
-        <!-- ✏️ КНОПКА -->
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginBottom="8dp"
+                    android:text="📊 Параметры"
+                    android:textColor="@color/aqua_deep"
+                    android:textStyle="bold" />
+
+                <TextView
+                    android:id="@+id/tv_age_weight"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:lineSpacingExtra="4dp"
+                    android:text="Рост: - см | Вес: - кг\nСтиль: Не выбран"
+                    android:textColor="#444444" />
+            </LinearLayout>
+        </com.google.android.material.card.MaterialCardView>
+
+        <com.google.android.material.card.MaterialCardView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            app:cardCornerRadius="16dp"
+            app:cardElevation="2dp">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:padding="16dp">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginBottom="12dp"
+                    android:text="🏊 Навыки по стилям"
+                    android:textColor="@color/aqua_deep"
+                    android:textStyle="bold" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Кроль"
+                    android:textSize="12sp" />
+
+                <ProgressBar
+                    android:id="@+id/pb_freestyle"
+                    style="?android:attr/progressBarStyleHorizontal"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginBottom="8dp"
+                    android:progress="40" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Брасс"
+                    android:textSize="12sp" />
+
+                <ProgressBar
+                    android:id="@+id/pb_breast"
+                    style="?android:attr/progressBarStyleHorizontal"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginBottom="8dp"
+                    android:progress="20" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Баттерфляй"
+                    android:textSize="12sp" />
+
+                <ProgressBar
+                    android:id="@+id/pb_fly"
+                    style="?android:attr/progressBarStyleHorizontal"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:progress="10" />
+            </LinearLayout>
+        </com.google.android.material.card.MaterialCardView>
+
         <Button
             android:id="@+id/btn_edit_profile"
+            style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+            android:layout_width="match_parent"
+            android:layout_height="55dp"
+            android:layout_marginTop="24dp"
+            android:text="✏️ Редактировать"
+            app:cornerRadius="12dp"
+            app:strokeColor="@color/aqua_primary" />
+
+        <Button
+            android:id="@+id/btn_logout"
+            style="@style/Widget.MaterialComponents.Button.TextButton"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="✏️ Редактировать профиль"
-            android:backgroundTint="@color/aqua_primary"
-            android:textColor="@android:color/white"
-            android:layout_marginBottom="20dp"/>
+            android:layout_marginTop="8dp"
+            android:text="Выйти из аккаунта"
+            android:textColor="#FF5252" />
 
-        <!-- 🔥 КРАСИВЫЙ БЛОК РЕЙТИНГА -->
-        <LinearLayout
+        <View
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="vertical"
-            android:gravity="center"
-            android:background="@drawable/bg_gradient"
-            android:padding="20dp"
-            android:elevation="6dp">
-
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="🔥 Твой общий рейтинг"
-                android:textSize="18sp"
-                android:textStyle="bold"
-                android:textColor="@android:color/white"
-                android:layout_marginBottom="8dp"/>
-
-            <TextView
-                android:id="@+id/tv_main_rating"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="0/100"
-                android:textSize="42sp"
-                android:textStyle="bold"
-                android:textColor="@android:color/white"/>
-        </LinearLayout>
+            android:layout_height="50dp" />
 
     </LinearLayout>
-</ScrollView>
+</androidx.core.widget.NestedScrollView>

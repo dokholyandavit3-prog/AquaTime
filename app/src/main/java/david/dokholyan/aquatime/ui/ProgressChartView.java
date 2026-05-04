@@ -1,75 +1,72 @@
 package david.dokholyan.aquatime.ui;
 
 import android.content.Context;
-import android.graphics.Canvas;
-import android.graphics.Color;
-import android.graphics.Paint;
+import android.graphics.*;
 import android.util.AttributeSet;
 import android.view.View;
+import androidx.annotation.Nullable;
 
 public class ProgressChartView extends View {
+    private float[] data = new float[0];
+    private Paint linePaint, barPaint;
+    private int mode = 0;
 
-    private final Paint linePaint = new Paint();
-    private final Paint pointPaint = new Paint();
-    private final Paint textPaint = new Paint();
-
-    // Тестовые данные (дистанции за 7 дней)
-    private final float[] distances = {800, 1000, 1200, 1100, 1400, 1500, 1600};
-    private final String[] days = {"Пн", "Вт", "Ср", "Чт", "Пт", "Сб", "Вс"};
-
-    public ProgressChartView(Context context, AttributeSet attrs) {
+    public ProgressChartView(Context context, @Nullable AttributeSet attrs) {
         super(context, attrs);
         init();
     }
 
     private void init() {
-        linePaint.setColor(Color.parseColor("#00AEEF"));
-        linePaint.setStrokeWidth(6f);
-        linePaint.setAntiAlias(true);
+        linePaint = new Paint(Paint.ANTI_ALIAS_FLAG);
+        linePaint.setColor(Color.parseColor("#009688"));
+        linePaint.setStrokeWidth(8f);
+        linePaint.setStyle(Paint.Style.STROKE);
+        linePaint.setStrokeCap(Paint.Cap.ROUND);
 
-        pointPaint.setColor(Color.parseColor("#0093E9"));
-        pointPaint.setAntiAlias(true);
+        barPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
+        barPaint.setColor(Color.parseColor("#80009688"));
+        barPaint.setStyle(Paint.Style.FILL);
+    }
 
-        textPaint.setColor(Color.DKGRAY);
-        textPaint.setTextSize(30f);
-        textPaint.setAntiAlias(true);
+    public void setData(float[] newData, int chartMode) {
+        this.data = newData;
+        this.mode = chartMode;
+        invalidate();
     }
 
     @Override
     protected void onDraw(Canvas canvas) {
         super.onDraw(canvas);
+        if (data == null || data.length == 0) return;
 
         float width = getWidth();
         float height = getHeight();
-        float padding = 80f;
-        float maxDistance = getMaxDistance();
-        float stepX = (width - 2 * padding) / (distances.length - 1);
+        float max = getMaxValue(data);
+        float stepX = width / (data.length > 1 ? data.length - 1 : 1);
+        if (mode == 1) stepX = width / data.length;
 
-        float prevX = 0, prevY = 0;
-
-        for (int i = 0; i < distances.length; i++) {
-            float x = padding + i * stepX;
-            float y = height - (distances[i] / maxDistance) * (height - 2 * padding);
-
-            // Рисуем линию
-            if (i > 0) {
-                canvas.drawLine(prevX, prevY, x, y, linePaint);
+        if (mode == 0) {
+            Path path = new Path();
+            for (int i = 0; i < data.length; i++) {
+                float x = i * stepX;
+                float y = height - (data[i] / max * height * 0.8f) - 20;
+                if (i == 0) path.moveTo(x, y);
+                else path.lineTo(x, y);
             }
-
-            // Точка
-            canvas.drawCircle(x, y, 10, pointPaint);
-
-            // Подпись под графиком
-            canvas.drawText(days[i], x - 20, height - 20, textPaint);
-
-            prevX = x;
-            prevY = y;
+            canvas.drawPath(path, linePaint);
+        } else {
+            for (int i = 0; i < data.length; i++) {
+                float barW = stepX * 0.6f;
+                float x = i * stepX + (stepX - barW) / 2;
+                float y = height - (data[i] / max * height * 0.8f) - 20;
+                canvas.drawRect(x, y, x + barW, height, barPaint);
+            }
         }
     }
 
-    private float getMaxDistance() {
-        float max = 0;
-        for (float d : distances) if (d > max) max = d;
+    private float getMaxValue(float[] array) {
+        float max = 1;
+        for (float f : array) if (f > max) max = f;
         return max;
     }
 }

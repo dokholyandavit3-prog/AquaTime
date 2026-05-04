@@ -1,208 +1,257 @@
 package david.dokholyan.aquatime.ui.profile;
 
-import android.animation.ObjectAnimator;
 import android.content.Context;
 import android.content.SharedPreferences;
+import android.graphics.*;
+import android.graphics.drawable.BitmapDrawable;
+import android.graphics.drawable.Drawable;
 import android.net.Uri;
 import android.os.Bundle;
-import android.view.*;
-import android.view.animation.DecelerateInterpolator;
+import android.text.InputFilter;
+import android.view.LayoutInflater;
+import android.view.View;
+import android.view.ViewGroup;
+import android.view.inputmethod.InputMethodManager;
 import android.widget.*;
-
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
-import androidx.annotation.*;
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+import androidx.appcompat.app.AlertDialog;
 import androidx.fragment.app.Fragment;
-import androidx.navigation.NavController;
-import androidx.navigation.fragment.NavHostFragment;
+import androidx.navigation.Navigation;
+
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.InputStream;
+import java.io.OutputStream;
 
 import david.dokholyan.aquatime.R;
 
 public class ProfileFragment extends Fragment {
 
-    private TextView tvName, tvDetails,tvEmail;
-    private TextView tvAchievements, tvLevel, tvRating;
-    private TextView tvFreestyle, tvBreast, tvFly, tvBack;
-    private TextView tvMainRating;
-
-    private ImageView imgAvatar;
+    private TextView tvName, tvEmail, tvDetails, tvLevel, tvMainRating, tvCountry;
+    private ImageView imgProfile;
     private SharedPreferences prefs;
-
     private ActivityResultLauncher<String> imagePicker;
+    private static final String DEFAULT_EMOJI = "🏊‍♂️";
 
     @Nullable
     @Override
-    public View onCreateView(@NonNull LayoutInflater inflater,
-                             @Nullable ViewGroup container,
-                             @Nullable Bundle savedInstanceState) {
-
+    public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.fragment_profile, container, false);
-
-        tvName = view.findViewById(R.id.tv_name);
-        tvDetails = view.findViewById(R.id.tv_age_weight);
-        tvEmail = view.findViewById(R.id.tv_email);
-        tvAchievements = view.findViewById(R.id.tv_achievements);
-        tvLevel = view.findViewById(R.id.tv_level);
-        tvRating = view.findViewById(R.id.tv_rating);
-        tvMainRating = view.findViewById(R.id.tv_main_rating);
-
-        imgAvatar = view.findViewById(R.id.img_avatar);
-
-        tvFreestyle = view.findViewById(R.id.tv_freestyle);
-        tvBreast = view.findViewById(R.id.tv_breast);
-        tvFly = view.findViewById(R.id.tv_fly);
-        tvBack = view.findViewById(R.id.tv_back);
-
         prefs = requireActivity().getSharedPreferences("AquaTime", Context.MODE_PRIVATE);
 
-        imagePicker = registerForActivityResult(
-                new ActivityResultContracts.GetContent(),
-                uri -> {
-                    if (uri != null) {
-                        prefs.edit().putString("avatar_uri", uri.toString()).apply();
-                        loadProfile();
-                        Toast.makeText(getContext(), "Фото обновлено", Toast.LENGTH_SHORT).show();
-                    }
+        initViews(view);
+
+
+        imagePicker = registerForActivityResult(new ActivityResultContracts.GetContent(), uri -> {
+            if (uri != null) {
+                String path = copyToInternalStorage(uri);
+                if (path != null) {
+                    prefs.edit().putString("profile_type", "uri").putString("profile_val", path).apply();
+                    renderProfileImage();
                 }
-        );
-        Button btnEdit = view.findViewById(R.id.btn_edit_profile);
-
-        btnEdit.setOnClickListener(v -> {
-            NavController navController = NavHostFragment.findNavController(this);
-            navController.navigate(R.id.editProfileFragment);
+            }
         });
-        loadProfile();
 
-        imgAvatar.setOnClickListener(v -> showAvatarMenu());
+        loadProfileData();
 
         return view;
     }
 
-    @Override
-    public void onResume() {
-        super.onResume();
-        loadProfile();
-    }
+    private void initViews(View v) {
+        tvName = v.findViewById(R.id.tv_name);
+        tvEmail = v.findViewById(R.id.tv_email);
+        tvDetails = v.findViewById(R.id.tv_age_weight);
+        tvLevel = v.findViewById(R.id.tv_level);
+        tvMainRating = v.findViewById(R.id.tv_main_rating);
+        tvCountry = v.findViewById(R.id.tv_country);
+        imgProfile = v.findViewById(R.id.img_avatar);
 
-    private void loadProfile() {
+        // Кнопка редактирования
+        v.findViewById(R.id.btn_edit_profile).setOnClickListener(view ->
+                Navigation.findNavController(view).navigate(R.id.editProfileFragment));
 
-        String firstName = prefs.getString("firstName", "Имя не указано");
-        String lastName = prefs.getString("lastName", "");
-        String height = prefs.getString("height", "-");
-        String weight = prefs.getString("weight", "-");
-        String style = prefs.getString("style", "Не выбран");
-        String nation = prefs.getString("nation", "");
-        String achievements = prefs.getString("achievements", "Нет достижений");
-        String email = prefs.getString("user_email", "не указан");
+        // Клик по аватару для смены
+        imgProfile.setOnClickListener(view -> showAvatarSelectionMenu());
 
-        tvName.setText("👤 " + firstName + " " + lastName + " " + nation);
-
-        tvDetails.setText(
-                "📏 Рост: " + height + " см | ⚖ Вес: " + weight + " кг\n" +
-                        "🏊 Стиль: " + style
-        );
-
-        tvFreestyle.setText("🏊 Кроль: " + calculateStyleRating("freestyle"));
-        tvBreast.setText("🏊 Брасс: " + calculateStyleRating("breast"));
-        tvFly.setText("🏊 Баттерфляй: " + calculateStyleRating("fly"));
-        tvBack.setText("🏊‍♂️ Спина: " + calculateStyleRating("back"));
-
-        tvAchievements.setText(achievements);
-        tvEmail.setText("📧 " + email);
-
-        calculateLevelAndRating();
-
-        String uri = prefs.getString("avatar_uri", null);if (uri != null) {
-            imgAvatar.setImageURI(Uri.parse(uri));
-        } else {
-            String avatar = prefs.getString("avatar", "avatar1");
-            switch (avatar) {
-                case "avatar1": imgAvatar.setImageResource(R.drawable.avatar_swim_1); break;
-                case "avatar2": imgAvatar.setImageResource(R.drawable.avatar_swim_2); break;
-                case "avatar3": imgAvatar.setImageResource(R.drawable.avatar_swim_3); break;
-                case "avatar4": imgAvatar.setImageResource(R.drawable.avatar_swim_4); break;
-            }
+        // КНОПКА ВЫХОДА (Исправлено)
+        Button btnLogout = v.findViewById(R.id.btn_logout);
+        if (btnLogout != null) {
+            btnLogout.setOnClickListener(view -> showLogoutDialog());
         }
     }
 
-    private String calculateStyleRating(String styleKey) {
-        int meters = prefs.getInt(styleKey + "_meters", 0);
-        int trainings = prefs.getInt(styleKey + "_trainings", 0);
+    private void loadProfileData() {
+        String firstName = prefs.getString("firstName", "David");
+        String lastName = prefs.getString("lastName", "");
+        tvName.setText(firstName + " " + lastName);
+        tvEmail.setText(prefs.getString("user_email", "davdokholyan2011@gmail.com"));
 
-        int rating = (trainings * 5) + (meters / 100);
-        if (rating > 99) rating = 99;
+        String nation = prefs.getString("nation", "Армения 🇦🇲");
+        tvCountry.setText("📍 " + nation);
 
-        String level;
-        if (rating < 30) level = "Beginner";
-        else if (rating < 60) level = "Amateur";
-        else if (rating < 80) level = "Pro";
-        else level = "Elite";
+        tvDetails.setText("📏 " + prefs.getString("height", "-") + " см | ⚖ " +
+                prefs.getString("weight", "-") + " кг\n🏊 Стиль: " +
+                prefs.getString("style", "Не выбран"));
 
-        return rating + " (" + level + ")";
-    }
-
-    private void calculateLevelAndRating() {
-
-        int totalMeters = prefs.getInt("total_meters", 0);
+        int meters = prefs.getInt("total_meters", 0);
         int trainings = prefs.getInt("trainings_count", 0);
+        int xp = meters + (trainings * 50);
+        tvMainRating.setText(String.valueOf(xp));
 
-        int rating = (trainings * 5) + (totalMeters / 100);
-        if (rating > 99) rating = 99;
+        if (xp < 1000) tvLevel.setText("Уровень: Beginner 🟢");
+        else if (xp < 5000) tvLevel.setText("Уровень: Amateur 🔵");
+        else tvLevel.setText("Уровень: Pro 🟣");
 
-        String level;
-        if (rating < 30) level = "Beginner 🟢";
-        else if (rating < 60) level = "Amateur 🔵";
-        else if (rating < 80) level = "Pro 🟣";
-        else level = "Elite 🔴";
-
-        tvRating.setText("⭐ Рейтинг: " + rating);
-        tvLevel.setText("🏆 Уровень: " + level);
-
-        // 🔥 ГЛАВНЫЙ РЕЙТИНГ + АНИМАЦИЯ
-        tvMainRating.setText(rating + "/100");
-
-        ObjectAnimator scaleX = ObjectAnimator.ofFloat(tvMainRating, "scaleX", 0.5f, 1f);
-        ObjectAnimator scaleY = ObjectAnimator.ofFloat(tvMainRating, "scaleY", 0.5f, 1f);
-
-        scaleX.setDuration(500);
-        scaleY.setDuration(500);
-
-        scaleX.setInterpolator(new DecelerateInterpolator());
-        scaleY.setInterpolator(new DecelerateInterpolator());
-
-        scaleX.start();
-        scaleY.start();
+        renderProfileImage();
     }
 
-    private void showAvatarMenu() {
-        String[] options = {"🎭 Выбрать аватар", "📸 Загрузить фото"};
-
-        new android.app.AlertDialog.Builder(getContext())
-                .setTitle("Аватар")
-                .setItems(options, (dialog, which) -> {
-                    if (which == 0) chooseAvatar();
-                    else imagePicker.launch("image/*");
-                })
+    private void showLogoutDialog() {
+        new AlertDialog.Builder(requireContext())
+                .setTitle("Выход из аккаунта")
+                .setMessage("Вы уверены, что хотите выйти? Все данные профиля будут удалены.")
+                .setPositiveButton("Выйти", (dialog, which) -> performLogout())
+                .setNegativeButton("Отмена", null)
                 .show();
     }
 
-    private void chooseAvatar() {
+    private void performLogout() {
 
-        String[] avatars = {"Аватар 1", "Аватар 2", "Аватар 3", "Аватар 4"};
+        com.google.firebase.auth.FirebaseAuth.getInstance().signOut();
 
-        new android.app.AlertDialog.Builder(getContext())
-                .setTitle("Выбери аватар")
-                .setItems(avatars, (dialog, which) -> {
+        if (prefs != null) {
+            prefs.edit().clear().apply();
+        }
 
-                    String selected = "avatar" + (which + 1);
+        if (getActivity() != null) {
+            android.content.Intent intent = new android.content.Intent(getActivity(), david.dokholyan.aquatime.LoginActivity.class);
 
-                    prefs.edit()
-                            .putString("avatar", selected)
-                            .remove("avatar_uri")
-                            .apply();
+            intent.addFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK | android.content.Intent.FLAG_ACTIVITY_CLEAR_TASK);
 
-                    loadProfile();
+            startActivity(intent);
+            getActivity().finish();
+        }
+    }
+    private void renderProfileImage() {
+        String type = prefs.getString("profile_type", "emoji");
+        String val = prefs.getString("profile_val", DEFAULT_EMOJI);
+
+        if ("uri".equals(type)) {
+            File f = new File(val);
+            if (f.exists()) {
+                BitmapFactory.Options opt = new BitmapFactory.Options();
+                opt.inSampleSize = 2;
+                Bitmap bitmap = BitmapFactory.decodeFile(f.getAbsolutePath(), opt);
+                if (bitmap != null) {
+                    imgProfile.setScaleType(ImageView.ScaleType.FIT_CENTER);
+                    imgProfile.setImageDrawable(createCircularBitmap(bitmap));
+                } else {
+                    setEmojiAvatar(DEFAULT_EMOJI);
+                }
+            } else {
+                setEmojiAvatar(DEFAULT_EMOJI);
+            }
+        } else {
+            setEmojiAvatar(val);
+        }
+    }
+
+    private void setEmojiAvatar(String emoji) {
+        imgProfile.setScaleType(ImageView.ScaleType.CENTER_INSIDE);
+        imgProfile.setImageDrawable(getBitmapFromEmoji(emoji));
+    }
+
+    private Drawable createCircularBitmap(Bitmap bitmap) {
+        int size = Math.min(bitmap.getWidth(), bitmap.getHeight());
+        int x = (bitmap.getWidth() - size) / 2;
+        int y = (bitmap.getHeight() - size) / 2;
+        Bitmap squared = Bitmap.createBitmap(bitmap, x, y, size, size);
+
+        Bitmap output = Bitmap.createBitmap(size, size, Bitmap.Config.ARGB_8888);
+        Canvas canvas = new Canvas(output);
+        Paint paint = new Paint(Paint.ANTI_ALIAS_FLAG);
+
+        BitmapShader shader = new BitmapShader(squared, Shader.TileMode.CLAMP, Shader.TileMode.CLAMP);
+        paint.setShader(shader);
+        float r = size / 2f;
+
+        canvas.drawCircle(r, r, r, paint);
+
+        Paint borderPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
+        borderPaint.setColor(Color.parseColor("#03A9F4"));
+        borderPaint.setStyle(Paint.Style.STROKE);
+        float strokeWidth = size * 0.04f;
+        borderPaint.setStrokeWidth(strokeWidth);
+        canvas.drawCircle(r, r, r - (strokeWidth / 2f), borderPaint);
+
+        return new BitmapDrawable(getResources(), output);
+    }
+
+    private Drawable getBitmapFromEmoji(String emoji) {
+        Bitmap bitmap = Bitmap.createBitmap(300, 300, Bitmap.Config.ARGB_8888);
+        Canvas canvas = new Canvas(bitmap);
+        Paint paint = new Paint(Paint.ANTI_ALIAS_FLAG);
+        paint.setTextSize(160);
+        paint.setTextAlign(Paint.Align.CENTER);
+
+        float y = (canvas.getHeight() / 2f) - ((paint.descent() + paint.ascent()) / 2f);
+        canvas.drawText(emoji, canvas.getWidth() / 2f, y, paint);
+
+        return new BitmapDrawable(getResources(), bitmap);
+    }
+
+    private void showAvatarSelectionMenu() {
+        String[] options = {"📸 Галерея", "✍️ Ввести Эмодзи"};
+        new AlertDialog.Builder(requireContext())
+                .setItems(options, (d, w) -> {
+                    if (w == 0) imagePicker.launch("image/*");
+                    else showEmojiInputDialog();
+                }).show();
+    }
+
+    private void showEmojiInputDialog() {
+        final EditText input = new EditText(requireContext());
+        input.setHint("Один эмодзи");
+        input.setFilters(new InputFilter[]{new InputFilter.LengthFilter(2)});
+
+        FrameLayout container = new FrameLayout(requireContext());
+        FrameLayout.LayoutParams params = new FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+        params.leftMargin = 60; params.rightMargin = 60;
+        input.setLayoutParams(params);
+        container.addView(input);
+
+        AlertDialog dialog = new AlertDialog.Builder(requireContext())
+                .setTitle("Выбор стиля")
+                .setView(container)
+                .setPositiveButton("ОК", (d, w) -> {
+                    String result = input.getText().toString().trim();
+                    if (!result.isEmpty()) {
+                        prefs.edit().putString("profile_type", "emoji").putString("profile_val", result).apply();
+                        renderProfileImage();
+                    }
                 })
-                .show();
+                .setNegativeButton("Отмена", null)
+                .create();
+        dialog.show();
+
+        input.postDelayed(() -> {
+            input.requestFocus();
+            InputMethodManager imm = (InputMethodManager) requireContext().getSystemService(Context.INPUT_METHOD_SERVICE);
+            if (imm != null) imm.showSoftInput(input, InputMethodManager.SHOW_IMPLICIT);
+        }, 100);
+    }
+
+    private String copyToInternalStorage(Uri uri) {
+        try {
+            InputStream is = requireContext().getContentResolver().openInputStream(uri);
+            File f = new File(requireContext().getFilesDir(), "profile_aqua.jpg");
+            OutputStream os = new FileOutputStream(f);
+            byte[] buf = new byte[1024]; int len;
+            while ((len = is.read(buf)) > 0) os.write(buf, 0, len);
+            os.close(); is.close();
+            return f.getAbsolutePath();
+        } catch (Exception e) { return null; }
     }
 }

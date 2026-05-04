@@ -1,28 +1,50 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:orientation="vertical"
-    android:background="@drawable/bg_gradient">
+    android:background="@android:color/white">
 
-    <!-- Кнопка Назад -->
-    <Button
-        android:id="@+id/btn_back"
+    <LinearLayout
+        android:id="@+id/toolbar"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="← Назад"
-        android:textAllCaps="false"
-        android:textColor="@android:color/white"
-        android:backgroundTint="@color/aqua_primary"
-        android:layout_margin="8dp" />
+        android:background="@color/aqua_primary"
+        android:padding="4dp"
+        android:elevation="4dp">
 
-    <!-- WebView для Wikipedia -->
+        <ImageButton
+            android:id="@+id/btn_back"
+            android:layout_width="48dp"
+            android:layout_height="48dp"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:src="@android:drawable/ic_menu_revert"
+            app:tint="@android:color/white" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center_vertical"
+            android:text="Биография"
+            android:textColor="@android:color/white"
+            android:textStyle="bold"
+            android:textSize="18sp"
+            android:layout_marginStart="16dp"/>
+    </LinearLayout>
+
+    <ProgressBar
+        android:id="@+id/web_loader"
+        style="@style/Widget.AppCompat.ProgressBar.Horizontal"
+        android:layout_width="match_parent"
+        android:layout_height="4dp"
+        android:layout_below="@id/toolbar"
+        android:indeterminate="true"
+        android:visibility="gone" />
+
     <WebView
         android:id="@+id/webView"
         android:layout_width="match_parent"
-        android:layout_height="0dp"
-        android:layout_weight="1"
-        android:background="@android:color/white" />
+        android:layout_height="match_parent"
+        android:layout_below="@id/web_loader" />
 
-</LinearLayout>
+</RelativeLayout>

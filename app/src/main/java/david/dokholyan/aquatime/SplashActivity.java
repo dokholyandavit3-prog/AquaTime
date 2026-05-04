@@ -6,6 +6,9 @@ import android.os.Bundle;
 import android.os.Handler;
 import androidx.appcompat.app.AppCompatActivity;
 
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseUser;
+
 public class SplashActivity extends AppCompatActivity {
 
     @Override
@@ -13,17 +16,15 @@ public class SplashActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_splash);
 
+        // В SplashActivity.java
         new Handler().postDelayed(() -> {
-            // Проверяем, есть ли имя пользователя в памяти
-            SharedPreferences prefs = getSharedPreferences("user_data", MODE_PRIVATE);
-            if (prefs.getString("name", null) == null) {
-                // Если данных нет → первый запуск → идём в ввод данных
-                startActivity(new Intent(this, UserSetupActivity.class));
+            FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
+            if (user != null && user.isEmailVerified()) {
+                startActivity(new Intent(SplashActivity.this, MainActivity.class));
             } else {
-                // Если данные уже есть → сразу открываем главное меню
-                startActivity(new Intent(this, MainActivity.class));
+                startActivity(new Intent(SplashActivity.this, LoginActivity.class));
             }
             finish();
-        }, 1500); // Задержка 1.5 секунды
+        }, 2000);
     }
 }

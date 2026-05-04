@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "949546588560",
+    "project_id": "aquatime-590ad",
+    "storage_bucket": "aquatime-590ad.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:949546588560:android:5d90f72b6d2c814683fb15",
+        "android_client_info": {
+          "package_name": "david.dokholyan.aquatime"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCOk-_CwL4UjpXJpatQGmrQ53gCZFEvAMw"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
