@@ -79,10 +79,20 @@ public class ProfileFragment extends Fragment {
     }
 
     private void loadProfileData() {
+
+        com.google.firebase.auth.FirebaseUser currentUser =
+                com.google.firebase.auth.FirebaseAuth.getInstance().getCurrentUser();
+
         String firstName = prefs.getString("firstName", "David");
         String lastName = prefs.getString("lastName", "");
         tvName.setText(firstName + " " + lastName);
-        tvEmail.setText(prefs.getString("user_email", "davdokholyan2011@gmail.com"));
+
+
+        if (currentUser != null && currentUser.getEmail() != null && !currentUser.getEmail().isEmpty()) {
+            tvEmail.setText(currentUser.getEmail());
+        } else {
+            tvEmail.setText("Гостевой режим");
+        }
 
         String nation = prefs.getString("nation", "Армения 🇦🇲");
         tvCountry.setText("📍 " + nation);
