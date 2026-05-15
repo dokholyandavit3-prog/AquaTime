@@ -1,3 +1,106 @@
 <resources>
     <string name="app_name">AquaTime</string>
+
+    <!-- Navigation -->
+    <string name="menu_home">Главная</string>
+    <string name="menu_training">Тренировка</string>
+    <string name="menu_analytics">Аналитика</string>
+    <string name="menu_profile">Профиль</string>
+
+    <!-- Dashboard -->
+    <string name="streak_title">УДАРНЫЙ РЕЖИМ</string>
+    <string name="streak_record">Рекорд: %1$d дней</string>
+    <string name="last_workout_title">ПОСЛЕДНЯЯ ТРЕНИРОВКА</string>
+    <string name="weekly_goals_title">ЦЕЛИ НЕДЕЛИ</string>
+    <string name="coach_advice_title">СОВЕТ ТРЕНЕРА</string>
+    <string name="btn_to_workout">К тренировке</string>
+    <string name="btn_to_analytics">К аналитике</string>
+    <string name="streak_days_count">%1$d дня подряд</string>
+    <string name="weekly_goals_progress">%1$d из %2$d м пройдено</string>
+    <string name="default_coach_advice">Для лучшего скольжения держи ладонь плоской, но не напряженной.</string>
+    <string name="dashboard_my_pool">МОЙ БАССЕЙН</string>
+    <string name="dashboard_no_pool_selected">Бассейн не выбран 🏊‍♂️</string>
+
+    <!-- Training -->
+    <string name="tip_of_day">💡 Совет дня</string>
+    <string name="default_training_tip">Совет: Не забывайте делать разминку перед прыжком в воду!</string>
+    <string name="btn_ai_plan">🤖 ПЛАН НА СЕГОДНЯ</string>
+    <string name="btn_save_result">💾 СОХРАНИТЬ РЕЗУЛЬТАТ</string>
+    <string name="btn_start">СТАРТ</string>
+    <string name="btn_pause">ПАУЗА</string>
+    <string name="btn_reset">СБРОС</string>
+
+    <!-- Исправленная навигация (согласно ошибке в menu) -->
+    <string name="nav_home">Главная</string>
+    <string name="nav_training">Тренировка</string>
+    <string name="nav_analytics">Аналитика</string>
+    <string name="nav_profile">Профиль</string>
+
+    <!-- Недостающие строки для fragment_training.xml -->
+    <string name="training_plan_title">План тренировки</string>
+    <string name="ai_plan_hint">Здесь появится ваш план, созданный ИИ</string>
+    <string name="manual_plan_title">Ручной ввод</string>
+    <string name="hint_manual_dist">Дистанция (м)</string>
+    <string name="btn_add_to_plan">Добавить в план</string>
+    <string name="btn_schedule">Запланировать</string>
+    <string name="last_swims_title">Последние заплывы</string>
+    <string name="total_swims_count">Всего заплывов: %1$d</string>
+    <string name="btn_delete_measure">Удалить замер</string>
+
+    <!-- Analytics Screen -->
+    <string name="stats_title">Статистика</string>
+    <string name="chart_dist_label">Дистанция за неделю (метры)</string>
+    <string name="chart_time_label">Время в воде (минуты)</string>
+    <string name="weekly_dist_label">Дистанция за неделю</string>
+    <string name="weekly_time_label">Время за неделю</string>
+    <string name="history_title">История</string>
+    <string name="no_records">Записей пока нет</string>
+    <string name="btn_history">ВСЯ ИСТОРИЯ</string>
+    <string name="ranks_title">Ранги по стилям</string>
+    <string name="btn_show_all_styles">ПОКАЗАТЬ ВСЕ СТИЛИ</string>
+    <string name="planner_title">Планировщик</string>
+    <string name="hint_goal">Введите цель тренировки…</string>
+    <string name="btn_add_goal">ДОБАВИТЬ ЦЕЛЬ</string>
+    <string name="btn_champions_advice">СОВЕТЫ ОТ ЧЕМПИОНОВ 🏆</string>
+    <!-- Settings -->
+    <string name="settings_title">Настройки</string>
+    <string name="change_theme">🌓 Сменить тему</string>
+    <string name="change_lang">🌐 Сменить язык</string>
+    <string name="btn_back">Назад</string>
+
+    <!-- History & Champions -->
+    <string name="history_full_title">📖 Полная история</string>
+    <string name="current_goals_title">🎯 Текущие цели</string>
+    <string name="completed_workouts_title">✅ Выполненные тренировки</string>
+    <string name="champions_title">🏆 Легенды плавания</string>
+
+    <!-- Rank Card -->
+    <string name="rank_style_default">Стиль</string>
+    <string name="rank_best_label">Лучший: %1$s</string>
+    <string name="btn_more">Подробнее</string>
+
+    <!-- Champion Item -->
+    <string name="champion_medals_default">🏅 Олимпийские медали</string>
+    <!-- Profile Screen -->
+    <string name="profile_level_pro">Уровень: Pro 🟣</string>
+    <string name="profile_location">📍 Армения 🇦🇲</string>
+    <string name="profile_rating_label">ВАШ ОБЩИЙ РЕЙТИНГ</string>
+    <string name="profile_params_title">📊 Параметры</string>
+    <string name="profile_params_summary">Рост: %1$d см | Вес: %2$d кг\nСтиль: %3$s</string>
+    <string name="profile_skills_title">🏊 Навыки по стилям</string>
+    <string name="style_freestyle">Кроль</string>
+    <string name="style_breaststroke">Брасс</string>
+    <string name="style_butterfly">Баттерфляй</string>
+    <string name="btn_edit">✏️ Редактировать</string>
+    <string name="btn_settings">⚙️ Настройки</string>
+    <string name="btn_logout">Выйти из аккаунта</string>
+
+    <!-- Edit Profile -->
+    <string name="edit_profile_title">Редактировать профиль</string>
+    <string name="hint_first_name">Имя</string>
+    <string name="hint_last_name">Фамилия</string>
+    <string name="hint_height">Рост (см)</string>
+    <string name="hint_weight">Вес (кг)</string>
+    <string name="hint_achievements">Основные достижения</string>
+    <string name="btn_save">💾 Сохранить</string>
 </resources>

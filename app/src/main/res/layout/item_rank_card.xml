@@ -21,7 +21,7 @@
                 android:id="@+id/tv_rank_style"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Стиль"
+                android:text="@string/rank_style_default"
                 android:textSize="16sp"
                 android:textStyle="bold" />
 
@@ -39,7 +39,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginTop="4dp"
-            android:text="Лучший: --"
+            android:text="@string/rank_best_label"
             android:textColor="@color/aqua_primary" />
 
         <TextView
@@ -62,6 +62,6 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_gravity="end"
-            android:text="Подробнее" />
+            android:text="@string/btn_more" />
     </LinearLayout>
 </com.google.android.material.card.MaterialCardView>

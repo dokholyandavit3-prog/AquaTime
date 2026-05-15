@@ -70,6 +70,10 @@ public class ProfileFragment extends Fragment {
         v.findViewById(R.id.btn_edit_profile).setOnClickListener(view ->
                 Navigation.findNavController(view).navigate(R.id.editProfileFragment));
 
+        // ПЕРЕХОД В НАСТРОЙКИ
+        v.findViewById(R.id.btn_settings).setOnClickListener(view ->
+                Navigation.findNavController(view).navigate(R.id.settingsFragment));
+
         imgProfile.setOnClickListener(view -> showAvatarSelectionMenu());
 
         Button btnLogout = v.findViewById(R.id.btn_logout);
@@ -79,14 +83,12 @@ public class ProfileFragment extends Fragment {
     }
 
     private void loadProfileData() {
-
         com.google.firebase.auth.FirebaseUser currentUser =
                 com.google.firebase.auth.FirebaseAuth.getInstance().getCurrentUser();
 
         String firstName = prefs.getString("firstName", "David");
         String lastName = prefs.getString("lastName", "");
         tvName.setText(firstName + " " + lastName);
-
 
         if (currentUser != null && currentUser.getEmail() != null && !currentUser.getEmail().isEmpty()) {
             tvEmail.setText(currentUser.getEmail());
@@ -178,7 +180,6 @@ public class ProfileFragment extends Fragment {
         paint.setShader(shader);
         float r = size / 2f;
 
-        // Рисуем только круг с фото, без внешней рамки
         canvas.drawCircle(r, r, r, paint);
 
         return new BitmapDrawable(getResources(), output);

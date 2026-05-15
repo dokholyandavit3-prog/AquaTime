@@ -3,7 +3,7 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="#F8FBFF"
+    android:background="?android:attr/windowBackground"
     android:fillViewport="true">
 
     <LinearLayout
@@ -12,14 +12,36 @@
         android:orientation="vertical"
         android:padding="20dp">
 
-        <TextView
-            android:id="@+id/tv_greeting"
-            android:layout_width="wrap_content"
+        <RelativeLayout
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginBottom="24dp"
-            android:textColor="#102A43"
-            android:textSize="26sp"
-            android:textStyle="bold" />
+            android:layout_marginBottom="24dp">
+
+            <TextView
+                android:id="@+id/tv_greeting"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_alignParentStart="true"
+                android:layout_centerVertical="true"
+                android:layout_toStartOf="@id/btn_open_map"
+                android:layout_marginEnd="16dp"
+                android:textColor="#102A43"
+                android:textSize="26sp"
+                android:textStyle="bold" />
+
+            <com.google.android.material.floatingactionbutton.FloatingActionButton
+                android:id="@+id/btn_open_map"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_alignParentEnd="true"
+                android:layout_centerVertical="true"
+                android:contentDescription="Open Pools Map"
+                app:backgroundTint="#1E88E5"
+                app:fabSize="mini"
+                app:srcCompat="@android:drawable/ic_dialog_map"
+                app:tint="#FFFFFF"
+                app:elevation="2dp" />
+        </RelativeLayout>
 
         <androidx.cardview.widget.CardView
             android:layout_width="match_parent"
@@ -47,7 +69,7 @@
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="УДАРНЫЙ РЕЖИМ"
+                        android:text="@string/streak_title"
                         android:textColor="#E65100"
                         android:textSize="12sp"
                         android:textStyle="bold"
@@ -59,10 +81,60 @@
                         android:textColor="#BF360C"
                         android:textSize="20sp"
                         android:textStyle="bold" />
+                    <TextView
+                        android:id="@+id/tv_best_streak_text"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="@string/streak_record"
+                        android:textSize="14sp"
+                        android:textColor="#757575" />
                 </LinearLayout>
             </LinearLayout>
         </androidx.cardview.widget.CardView>
 
+        <androidx.cardview.widget.CardView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            app:cardCornerRadius="32dp"
+            app:cardElevation="2dp"
+            android:layout_marginBottom="20dp">
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:padding="24dp"
+                android:background="#E0F7FA"
+                android:gravity="center_vertical">
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="🏊‍♂️"
+                    android:textSize="32sp" />
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:layout_marginStart="16dp">
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="@string/dashboard_my_pool"
+                        android:textColor="#006064"
+                        android:textSize="12sp"
+                        android:textStyle="bold"
+                        android:letterSpacing="0.1"/>
+                    <TextView
+                        android:id="@+id/tv_favorite_pool_dashboard"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="@string/dashboard_no_pool_selected"
+                        android:textColor="#00838F"
+                        android:textSize="20sp"
+                        android:textStyle="bold"
+                        android:layout_marginTop="2dp" />
+                </LinearLayout>
+            </LinearLayout>
+        </androidx.cardview.widget.CardView>
         <androidx.cardview.widget.CardView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -77,7 +149,7 @@
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="ПОСЛЕДНЯЯ ТРЕНИРОВКА"
+                        android:text="@string/last_workout_title"
                         android:textColor="#546E7A"
                         android:textStyle="bold"
                         android:textSize="12sp"
@@ -135,7 +207,7 @@
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="ЦЕЛИ НЕДЕЛИ"
+                        android:text="@string/weekly_goals_title"
                         android:textColor="#102A43"
                         android:textSize="18sp"
                         android:textStyle="bold" />
@@ -167,7 +239,7 @@
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="СОВЕТ ТРЕНЕРА"
+                        android:text="@string/coach_advice_title"
                         android:textStyle="bold"
                         android:textColor="#1565C0"
                         android:textSize="12sp"
@@ -194,7 +266,7 @@
                 android:layout_weight="1"
                 android:layout_marginEnd="8dp"
                 android:backgroundTint="#1E88E5"
-                android:text="К тренировке"
+                android:text="@string/btn_to_workout"
                 android:textAllCaps="false"
                 android:textColor="#FFFFFF" />
             <Button
@@ -204,10 +276,12 @@
                 android:layout_weight="1"
                 android:layout_marginStart="8dp"
                 android:backgroundTint="#E3F2FD"
-                android:text="К аналитике"
+                android:text="@string/btn_to_analytics"
                 android:textAllCaps="false"
                 android:textColor="#1E88E5" />
         </LinearLayout>
-
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="50dp" />
     </LinearLayout>
 </androidx.core.widget.NestedScrollView>

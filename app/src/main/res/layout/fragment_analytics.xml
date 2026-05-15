@@ -3,7 +3,7 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@color/aqua_light"
+    android:background="?android:attr/windowBackground"
     android:fillViewport="true">
 
     <LinearLayout
@@ -17,7 +17,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginBottom="16dp"
-            android:text="📊 Моя статистика"
+            android:text="@string/stats_title"
             android:textColor="@color/aqua_deep"
             android:textSize="22sp"
             android:textStyle="bold" />
@@ -26,7 +26,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginBottom="4dp"
-            android:text="Дистанция по дням (м)"
+            android:text="@string/chart_dist_label"
             android:textSize="12sp" />
 
         <david.dokholyan.aquatime.ui.ProgressChartView
@@ -41,7 +41,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginBottom="4dp"
-            android:text="Время по дням (мин)"
+            android:text="@string/chart_time_label"
             android:textSize="12sp" />
 
         <david.dokholyan.aquatime.ui.ProgressChartView
@@ -83,7 +83,7 @@
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="Дистанция за неделю"
+                        android:text="@string/weekly_dist_label"
                         android:textSize="10sp" />
                 </LinearLayout>
             </androidx.cardview.widget.CardView>
@@ -113,7 +113,7 @@
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="Время за неделю"
+                        android:text="@string/weekly_time_label"
                         android:textSize="10sp" />
                 </LinearLayout>
             </androidx.cardview.widget.CardView>
@@ -134,7 +134,7 @@
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="🕒 Последняя тренировка"
+                    android:text="@string/history_title"
                     android:textColor="@color/aqua_deep"
                     android:textStyle="bold" />
 
@@ -143,7 +143,7 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="4dp"
-                    android:text="Пока нет записей"
+                    android:text="@string/no_records"
                     android:textColor="@android:color/darker_gray" />
 
                 <Button
@@ -152,7 +152,7 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_gravity="end"
-                    android:text="ИСТОРИЯ →" />
+                    android:text="@string/btn_history" />
             </LinearLayout>
         </com.google.android.material.card.MaterialCardView>
 
@@ -160,7 +160,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginBottom="8dp"
-            android:text="🏆 Спортивные нормативы"
+            android:text="@string/ranks_title"
             android:textColor="@color/aqua_deep"
             android:textStyle="bold" />
 
@@ -175,7 +175,7 @@
             style="@style/Widget.MaterialComponents.Button.TextButton"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="ПОКАЗАТЬ ВСЕ СТИЛИ" />
+            android:text="@string/btn_show_all_styles" />
 
         <com.google.android.material.card.MaterialCardView
             android:layout_width="match_parent"
@@ -193,7 +193,7 @@
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="🎯 Планировщик целей"
+                    android:text="@string/planner_title"
                     android:textColor="@color/aqua_deep"
                     android:textSize="16sp"
                     android:textStyle="bold" />
@@ -203,7 +203,7 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:background="@android:color/transparent"
-                    android:hint="Напр: 100м брасс за 1:20"
+                    android:hint="@string/hint_goal"
                     android:padding="8dp"
                     android:textSize="14sp" />
 
@@ -212,7 +212,7 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="8dp"
-                    android:text="ДОБАВИТЬ ЦЕЛЬ"
+                    android:text="@string/btn_add_goal"
                     app:cornerRadius="12dp" />
 
                 <TextView
@@ -229,7 +229,7 @@
             android:layout_width="match_parent"
             android:layout_height="60dp"
             android:layout_marginBottom="20dp"
-            android:text="🏆 СОВЕТЫ ЧЕМПИОНОВ"
+            android:text="@string/btn_champions_advice"
             app:backgroundTint="@color/aqua_deep"
             app:cornerRadius="16dp" />
 

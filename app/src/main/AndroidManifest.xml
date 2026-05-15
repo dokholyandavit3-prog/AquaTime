@@ -1,17 +1,24 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="david.dokholyan.aquatime">
+
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
 
     <application
-        android:allowBackup="true"
+        android:name=".AquaTimeApp" android:allowBackup="true"
         android:icon="@mipmap/ic_launcher"
         android:label="@string/app_name"
         android:supportsRtl="true"
-        android:theme="@style/Theme.AquaTime">
+        android:theme="@style/Theme.AquaTime"
+        android:usesCleartextTraffic="true">
 
-        <!-- Splash запускается первым -->
+        <meta-data
+            android:name="com.yandex.MapkitApiKey"
+            android:value="80160654-6817-4b79-89d8-ba87567080f4" />
+
         <activity
             android:name=".SplashActivity"
             android:exported="true">
@@ -21,13 +28,11 @@
             </intent-filter>
         </activity>
 
-        <!-- Основное приложение -->
         <activity android:name=".MainActivity" />
-        <!-- Экран первого ввода данных -->
         <activity android:name=".LoginActivity" />
-        <activity android:name=".EditProfileActivity" />
+
         <receiver android:name=".ui.training.TrainingReminderReceiver"
-                  android:exported="false" />
+            android:exported="false" />
 
     </application>
 </manifest>

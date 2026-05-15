@@ -3,7 +3,7 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@color/aqua_light">
+    android:background="?android:attr/windowBackground">
 
     <LinearLayout
         android:layout_width="match_parent"
@@ -31,7 +31,6 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginTop="16dp"
-            android:text="David"
             android:textColor="@color/aqua_deep"
             android:textSize="24sp"
             android:textStyle="bold" />
@@ -41,7 +40,6 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginBottom="12dp"
-            android:text="davdokholyan2011@gmail.com"
             android:textColor="@android:color/darker_gray"
             android:textSize="14sp" />
 
@@ -49,7 +47,7 @@
             android:id="@+id/tv_level"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Уровень: Pro 🟣"
+            android:text="@string/profile_level_pro"
             android:textColor="@color/aqua_primary"
             android:textStyle="italic" />
 
@@ -57,7 +55,7 @@
             android:id="@+id/tv_country"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="📍 Армения 🇦🇲"
+            android:text="@string/profile_location"
             android:textColor="#757575"
             android:textSize="14sp" />
 
@@ -80,7 +78,7 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:letterSpacing="0.1"
-                    android:text="ВАШ ОБЩИЙ РЕЙТИНГ"
+                    android:text="@string/profile_rating_label"
                     android:textColor="#CCFFFFFF"
                     android:textSize="12sp" />
 
@@ -112,7 +110,7 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_marginBottom="8dp"
-                    android:text="📊 Параметры"
+                    android:text="@string/profile_params_title"
                     android:textColor="@color/aqua_deep"
                     android:textStyle="bold" />
 
@@ -121,7 +119,6 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:lineSpacingExtra="4dp"
-                    android:text="Рост: - см | Вес: - кг\nСтиль: Не выбран"
                     android:textColor="#444444" />
             </LinearLayout>
         </com.google.android.material.card.MaterialCardView>
@@ -143,14 +140,14 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_marginBottom="12dp"
-                    android:text="🏊 Навыки по стилям"
+                    android:text="@string/profile_skills_title"
                     android:textColor="@color/aqua_deep"
                     android:textStyle="bold" />
 
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="Кроль"
+                    android:text="@string/style_freestyle"
                     android:textSize="12sp" />
 
                 <ProgressBar
@@ -164,7 +161,7 @@
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="Брасс"
+                    android:text="@string/style_breaststroke"
                     android:textSize="12sp" />
 
                 <ProgressBar
@@ -178,7 +175,7 @@
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="Баттерфляй"
+                    android:text="@string/style_butterfly"
                     android:textSize="12sp" />
 
                 <ProgressBar
@@ -196,7 +193,17 @@
             android:layout_width="match_parent"
             android:layout_height="55dp"
             android:layout_marginTop="24dp"
-            android:text="✏️ Редактировать"
+            android:text="@string/btn_edit"
+            app:cornerRadius="12dp"
+            app:strokeColor="@color/aqua_primary" />
+
+        <Button
+            android:id="@+id/btn_settings"
+            style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+            android:layout_width="match_parent"
+            android:layout_height="55dp"
+            android:layout_marginTop="12dp"
+            android:text="@string/btn_settings"
             app:cornerRadius="12dp"
             app:strokeColor="@color/aqua_primary" />
 
@@ -206,7 +213,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="8dp"
-            android:text="Выйти из аккаунта"
+            android:text="@string/btn_logout"
             android:textColor="#FF5252" />
 
         <View

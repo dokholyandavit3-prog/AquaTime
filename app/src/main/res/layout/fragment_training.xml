@@ -3,7 +3,7 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="#F0F8FF"
+    android:background="?android:attr/windowBackground"
     android:fillViewport="true">
 
     <LinearLayout
@@ -28,7 +28,7 @@
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="💡 Совет дня"
+                    android:text="@string/tip_of_day"
                     android:textColor="#1976D2"
                     android:textStyle="bold" />
 
@@ -37,7 +37,7 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="4dp"
-                    android:text="Совет: Не забывайте делать разминку на суше перед прыжком в воду!"
+                    android:text="@string/default_training_tip"
                     android:textColor="#102A43" />
             </LinearLayout>
         </androidx.cardview.widget.CardView>
@@ -58,7 +58,7 @@
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="План тренировки"
+                    android:text="@string/training_plan_title"
                     android:textColor="#1976D2"
                     android:textSize="18sp"
                     android:textStyle="bold" />
@@ -69,7 +69,7 @@
                     android:layout_height="wrap_content"
                     android:layout_marginTop="8dp"
                     android:gravity="center"
-                    android:text="Нажми на робота для генерации плана"
+                    android:text="@string/ai_plan_hint"
                     android:textColor="#9E9E9E" />
 
                 <Button
@@ -79,7 +79,7 @@
                     android:layout_height="wrap_content"
                     android:layout_gravity="center"
                     android:layout_marginTop="12dp"
-                    android:text="🤖 ПЛАН НА СЕГОДНЯ" />
+                    android:text="@string/btn_ai_plan" />
 
                 <View
                     android:layout_width="match_parent"
@@ -90,7 +90,7 @@
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="🛠 Собрать свою тренировку"
+                    android:text="@string/manual_plan_title"
                     android:textColor="#1976D2"
                     android:textStyle="bold" />
 
@@ -100,7 +100,7 @@
                     android:layout_height="wrap_content"
                     android:layout_marginTop="8dp"
                     android:background="@null"
-                    android:hint="Например: 4x50м кроль через 15с"
+                    android:hint="@string/hint_manual_dist"
                     android:padding="8dp"
                     android:textSize="14sp" />
 
@@ -109,7 +109,7 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="8dp"
-                    android:text="ДОБАВИТЬ В МОЙ ПЛАН"
+                    android:text="@string/btn_add_to_plan"
                     app:backgroundTint="#008CFF"
                     app:cornerRadius="12dp" />
 
@@ -119,7 +119,7 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="8dp"
-                    android:text="📅 ЗАПЛАНИРОВАТЬ"
+                    android:text="@string/btn_schedule"
                     app:cornerRadius="12dp" />
             </LinearLayout>
         </androidx.cardview.widget.CardView>
@@ -158,7 +158,7 @@
                         android:layout_height="wrap_content"
                         android:layout_marginEnd="8dp"
                         android:backgroundTint="#4CAF50"
-                        android:text="СТАРТ"
+                        android:text="@string/btn_start"
                         app:cornerRadius="16dp" />
 
                     <Button
@@ -167,7 +167,7 @@
                         android:layout_height="wrap_content"
                         android:layout_marginEnd="8dp"
                         android:backgroundTint="#F44336"
-                        android:text="ПАУЗА"
+                        android:text="@string/btn_pause"
                         app:cornerRadius="16dp" />
 
                     <Button
@@ -175,7 +175,7 @@
                         style="@style/Widget.MaterialComponents.Button.TextButton"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="СБРОС"
+                        android:text="@string/btn_reset"
                         android:textColor="#9E9E9E" />
                 </LinearLayout>
 
@@ -189,14 +189,15 @@
                     android:id="@+id/spinner_distance"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:layout_gravity="start" />
+                    android:layout_gravity="start"
+                    android:entries="@array/swimming_styles_array" />
 
                 <Button
                     android:id="@+id/btn_save_measure"
                     android:layout_width="match_parent"
                     android:layout_height="60dp"
                     android:layout_marginTop="16dp"
-                    android:text="💾 СОХРАНИТЬ РЕЗУЛЬТАТ"
+                    android:text="@string/btn_save_result"
                     android:textSize="16sp"
                     app:backgroundTint="#008CFF"
                     app:cornerRadius="16dp" />
@@ -212,7 +213,7 @@
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
-                android:text="🕒 Последние заплывы"
+                android:text="@string/last_swims_title"
                 android:textColor="#1976D2"
                 android:textStyle="bold" />
 
@@ -220,7 +221,7 @@
                 android:id="@+id/tv_stats_count"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Всего заплывов: 1"
+                android:text="@string/total_swims_count"
                 android:textColor="#9E9E9E"
                 android:textSize="12sp" />
         </LinearLayout>
@@ -238,7 +239,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="8dp"
-            android:text="🗑 УДАЛИТЬ ВЫБРАННЫЙ ЗАМЕР"
+            android:text="@string/btn_delete_measure"
             android:textColor="#F44336" />
 
         <View

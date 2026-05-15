@@ -31,15 +31,7 @@
         <action
             android:id="@+id/action_profile_to_edit"
             app:destination="@id/editProfileFragment" />
-        <action
-            android:id="@+id/action_profile_to_achievements"
-            app:destination="@id/achievementsFragment" />
     </fragment>
-
-    <fragment
-        android:id="@+id/achievementsFragment"
-        android:name="david.dokholyan.aquatime.ui.profile.AchievementsFragment"
-        android:label="Достижения" />
 
     <fragment
         android:id="@+id/historyFragment"
@@ -58,4 +50,15 @@
         android:label="Профиль чемпиона"
         tools:layout="@layout/fragment_athlete_detail" />
 
+    <fragment
+        android:id="@+id/settingsFragment"
+        android:name="david.dokholyan.aquatime.ui.profile.SettingsFragment"
+        android:label="Настройки"
+        tools:layout="@layout/fragment_settings" />
+
+    <fragment
+        android:id="@+id/poolsMapFragment"
+        android:name="david.dokholyan.aquatime.ui.PoolsMapFragment"
+        android:label="Pools Map"
+        tools:layout="@layout/fragment_pools_map" />
 </navigation>

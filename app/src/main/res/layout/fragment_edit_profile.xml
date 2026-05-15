@@ -1,7 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
 <ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@color/aqua_light"
+    android:background="?android:attr/windowBackground"
     android:padding="16dp">
 
     <LinearLayout
@@ -12,7 +13,7 @@
         <TextView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="Редактировать профиль"
+            android:text="@string/edit_profile_title"
             android:textSize="22sp"
             android:textStyle="bold"
             android:textColor="@color/aqua_deep"
@@ -22,7 +23,7 @@
             android:id="@+id/input_first_name"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:hint="Имя"
+            android:hint="@string/hint_first_name"
             android:inputType="textPersonName"
             android:layout_marginBottom="8dp"/>
 
@@ -30,14 +31,14 @@
             android:id="@+id/input_last_name"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:hint="Фамилия"
+            android:hint="@string/hint_last_name"
             android:layout_marginBottom="8dp"/>
 
         <EditText
             android:id="@+id/input_height"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:hint="Рост (см)"
+            android:hint="@string/hint_height"
             android:inputType="number"
             android:layout_marginBottom="8dp"/>
 
@@ -45,18 +46,16 @@
             android:id="@+id/input_weight"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:hint="Вес (кг)"
+            android:hint="@string/hint_weight"
             android:inputType="numberDecimal"
             android:layout_marginBottom="8dp"/>
 
-        <!-- Стиль плавания -->
         <Spinner
             android:id="@+id/spinner_style"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginBottom="8dp"/>
 
-        <!-- Нация -->
         <Spinner
             android:id="@+id/spinner_nation"
             android:layout_width="match_parent"
@@ -67,7 +66,7 @@
             android:id="@+id/input_achievements"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:hint="Основные достижения"
+            android:hint="@string/hint_achievements"
             android:minLines="3"
             android:gravity="top"
             android:layout_marginBottom="16dp"/>
@@ -77,7 +76,7 @@
             android:id="@+id/btn_save"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="💾 Сохранить"
+            android:text="@string/btn_save"
             android:backgroundTint="@color/aqua_primary"
             android:textColor="@android:color/white"
             android:layout_marginBottom="8dp"/>
@@ -86,7 +85,7 @@
             android:id="@+id/btn_back"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="⬅ Назад"
+            android:text="@string/btn_back"
             android:backgroundTint="@color/aqua_accent"
             android:textColor="@android:color/white"/>
     </LinearLayout>
