@@ -28,14 +28,13 @@ import java.util.Locale;
 public class AnalyticsFragment extends Fragment {
 
     private SharedPreferences prefs;
-    private TextView tvTotalDist, tvTotalTime, tvHistory, tvPlanner;
+    private TextView tvTotalDist, tvTotalTrainingsCount, tvHistory, tvPlanner;
     private EditText etGoal;
     private LinearLayout ranksContainer;
-    private ProgressChartView chartDist, chartTime;
+    private ProgressChartView chartDist;
     private boolean isExpanded = false;
 
-
-    private final String[] styles = {"Вольный стиль", "Брасс", "На спине", "Баттерфляй", "Комплекс"};
+    private final String[] styles = {"Вольный стиль 50м", "Брасс 50м", "На спине 50м", "Баттерфляй 50м", "Комплекс 100м"};
     private final String[] rankNames = {"III юн", "II юн", "I юн", "III", "II", "I", "КМС", "МС", "МСМК"};
 
     private final double[][] norms = {
@@ -70,26 +69,30 @@ public class AnalyticsFragment extends Fragment {
 
     private void initViews(View v) {
         tvTotalDist = v.findViewById(R.id.tv_total_distance);
-        tvTotalTime = v.findViewById(R.id.tv_total_time);
+        tvTotalTrainingsCount = v.findViewById(R.id.tv_total_trainings_count);
         tvHistory = v.findViewById(R.id.tv_history_summary);
         tvPlanner = v.findViewById(R.id.tv_planner_list);
         etGoal = v.findViewById(R.id.et_training_goal);
         ranksContainer = v.findViewById(R.id.ranks_container);
         chartDist = v.findViewById(R.id.chart_dist_weekly);
-        chartTime = v.findViewById(R.id.chart_time_weekly);
 
         tvPlanner.setText(prefs.getString("planner", "Нет запланированных целей"));
     }
 
     private void calculateWeeklyStats() {
         String data = prefs.getString("all_res", "");
-        if (data.isEmpty()) return;
+        if (data.isEmpty()) {
+            tvTotalTrainingsCount.setText("0");
+            return;
+        }
 
         String[] entries = data.split(";");
+
+
+        int totalTrainingsCount = entries.length;
+
         float[] weeklyDist = new float[7];
-        float[] weeklyTime = new float[7];
         int totalWeeklyDist = 0;
-        long totalWeeklySecs = 0;
 
         SimpleDateFormat sdf = new SimpleDateFormat("dd.MM.yyyy", Locale.getDefault());
         Calendar now = Calendar.getInstance();
@@ -103,25 +106,20 @@ public class AnalyticsFragment extends Fragment {
 
                 if (cal.get(Calendar.WEEK_OF_YEAR) == now.get(Calendar.WEEK_OF_YEAR)) {
                     int d = Integer.parseInt(p[0].trim());
-                    String[] t = p[1].trim().split(":");
-                    int m = Integer.parseInt(t[0]);
-                    int s = Integer.parseInt(t[1]);
 
                     int day = (cal.get(Calendar.DAY_OF_WEEK) + 5) % 7;
                     weeklyDist[day] += d;
-                    weeklyTime[day] += (m + s / 60f);
 
                     totalWeeklyDist += d;
-                    totalWeeklySecs += (m * 60 + s);
                 }
             } catch (Exception ignored) {}
         }
 
         chartDist.setData(weeklyDist, 1);
-        chartTime.setData(weeklyTime, 0);
 
         tvTotalDist.setText(totalWeeklyDist + " м");
-        tvTotalTime.setText(String.format(Locale.getDefault(), "%02d:%02d", totalWeeklySecs / 60, totalWeeklySecs % 60));
+        // Выводим сумму всех тренировок в карточку
+        tvTotalTrainingsCount.setText(String.valueOf(totalTrainingsCount));
 
         String lastEntry = entries[0].replace("|", " — ");
         tvHistory.setText("Последняя: " + lastEntry);
@@ -134,11 +132,11 @@ public class AnalyticsFragment extends Fragment {
             ((TextView) card.findViewById(R.id.tv_rank_style)).setText(styles[i]);
 
             String bestTime;
-            if (i == 0) bestTime = getMinTime("best_style_0", "best_style_4"); // Кроль
-            else if (i == 1) bestTime = getMinTime("best_style_1", "best_style_5"); // Брасс
-            else if (i == 2) bestTime = getMinTime("best_style_2", "best_style_6"); // Спина
-            else if (i == 3) bestTime = getMinTime("best_style_3", "best_style_7"); // Батт
-            else bestTime = prefs.getString("best_style_8", "99:99:99"); // Комплекс
+            if (i == 0) bestTime = getMinTime("best_style_0", "best_style_4");
+            else if (i == 1) bestTime = getMinTime("best_style_1", "best_style_5");
+            else if (i == 2) bestTime = getMinTime("best_style_2", "best_style_6");
+            else if (i == 3) bestTime = getMinTime("best_style_3", "best_style_7");
+            else bestTime = prefs.getString("best_style_8", "99:99:99");
 
             if (bestTime.equals("99:99:99")) bestTime = "00:00:00";
 
@@ -161,7 +159,6 @@ public class AnalyticsFragment extends Fragment {
             ranksContainer.addView(card);
         }
     }
-
 
     private String getMinTime(String key1, String key2) {
         String t1 = prefs.getString(key1, "99:99:99");

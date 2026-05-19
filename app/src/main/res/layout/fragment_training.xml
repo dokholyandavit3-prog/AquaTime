@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.core.widget.NestedScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+<androidx.core.widget.NestedScrollView
+    xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
@@ -10,241 +11,261 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="vertical"
-        android:padding="16dp">
+        android:padding="20dp">
 
         <androidx.cardview.widget.CardView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginBottom="16dp"
-            app:cardCornerRadius="20dp"
-            app:cardElevation="2dp">
-
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:orientation="vertical"
-                android:padding="16dp">
-
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="@string/tip_of_day"
-                    android:textColor="#1976D2"
-                    android:textStyle="bold" />
-
-                <TextView
-                    android:id="@+id/tv_swimming_tip"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="4dp"
-                    android:text="@string/default_training_tip"
-                    android:textColor="#102A43" />
-            </LinearLayout>
-        </androidx.cardview.widget.CardView>
-
-        <androidx.cardview.widget.CardView
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginBottom="16dp"
-            app:cardCornerRadius="20dp"
-            app:cardElevation="2dp">
-
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:orientation="vertical"
-                android:padding="16dp">
-
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="@string/training_plan_title"
-                    android:textColor="#1976D2"
-                    android:textSize="18sp"
-                    android:textStyle="bold" />
-
-                <TextView
-                    android:id="@+id/tv_today_training"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="8dp"
-                    android:gravity="center"
-                    android:text="@string/ai_plan_hint"
-                    android:textColor="#9E9E9E" />
-
-                <Button
-                    android:id="@+id/btn_start_training"
-                    style="@style/Widget.MaterialComponents.Button.TextButton"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_gravity="center"
-                    android:layout_marginTop="12dp"
-                    android:text="@string/btn_ai_plan" />
-
-                <View
-                    android:layout_width="match_parent"
-                    android:layout_height="1dp"
-                    android:layout_marginVertical="12dp"
-                    android:background="#EEEEEE" />
-
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="@string/manual_plan_title"
-                    android:textColor="#1976D2"
-                    android:textStyle="bold" />
-
-                <EditText
-                    android:id="@+id/et_manual_dist"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="8dp"
-                    android:background="@null"
-                    android:hint="@string/hint_manual_dist"
-                    android:padding="8dp"
-                    android:textSize="14sp" />
-
-                <Button
-                    android:id="@+id/btn_save_manual_training"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="8dp"
-                    android:text="@string/btn_add_to_plan"
-                    app:backgroundTint="#008CFF"
-                    app:cornerRadius="12dp" />
-
-                <Button
-                    android:id="@+id/btn_open_calendar"
-                    style="@style/Widget.MaterialComponents.Button.OutlinedButton"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="8dp"
-                    android:text="@string/btn_schedule"
-                    app:cornerRadius="12dp" />
-            </LinearLayout>
-        </androidx.cardview.widget.CardView>
-
-        <androidx.cardview.widget.CardView
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginBottom="16dp"
             app:cardCornerRadius="24dp"
-            app:cardElevation="2dp">
+            android:layout_marginBottom="16dp"
+            app:cardElevation="0dp"
+            app:cardBackgroundColor="#F5F7FA">
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:padding="16dp"
+                android:orientation="horizontal"
+                android:gravity="center_vertical">
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="💡"
+                    android:textSize="24sp" />
+                <TextView
+                    android:id="@+id/tv_coach_tip"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="12dp"
+                    android:text="Сильный удар ногами идет от бедра, а не от колена."
+                    android:textColor="#486581"
+                    android:textSize="14sp" />
+            </LinearLayout>
+        </androidx.cardview.widget.CardView>
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="ВЫБЕРИТЕ РЕЖИМ"
+            android:textSize="12sp"
+            android:textStyle="bold"
+            android:textColor="#627D98"
+            android:letterSpacing="0.1"
+            android:layout_marginBottom="8dp"/>
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:layout_marginBottom="16dp">
+
+            <Button
+                android:id="@+id/btn_mode_ai"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="ИИ-План"
+                android:layout_marginEnd="4dp"
+                style="@style/Widget.MaterialComponents.Button.TextButton"
+                android:backgroundTint="#E3F2FD"/>
+
+            <Button
+                android:id="@+id/btn_mode_constructor"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="Конструктор"
+                android:layout_marginEnd="4dp"
+                style="@style/Widget.MaterialComponents.Button.TextButton"/>
+
+            <Button
+                android:id="@+id/btn_mode_manual"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="Быстрый"
+                style="@style/Widget.MaterialComponents.Button.TextButton"/>
+        </LinearLayout>
+
+        <androidx.cardview.widget.CardView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            app:cardCornerRadius="32dp"
+            app:cardElevation="4dp"
+            android:layout_marginBottom="12dp">
 
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:gravity="center"
                 android:orientation="vertical"
-                android:padding="20dp">
+                android:padding="24dp">
 
                 <TextView
-                    android:id="@+id/tv_timer"
+                    android:id="@+id/tv_workout_title"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:fontFamily="sans-serif-light"
-                    android:text="00:00:00"
+                    android:text="Комплексная тренировка"
                     android:textColor="#102A43"
-                    android:textSize="56sp" />
+                    android:textSize="22sp"
+                    android:textStyle="bold"/>
 
-                <LinearLayout
+                <TextView
+                    android:id="@+id/tv_workout_distance"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:layout_marginTop="16dp">
-
-                    <Button
-                        android:id="@+id/btn_start_timer"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_marginEnd="8dp"
-                        android:backgroundTint="#4CAF50"
-                        android:text="@string/btn_start"
-                        app:cornerRadius="16dp" />
-
-                    <Button
-                        android:id="@+id/btn_stop_timer"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_marginEnd="8dp"
-                        android:backgroundTint="#F44336"
-                        android:text="@string/btn_pause"
-                        app:cornerRadius="16dp" />
-
-                    <Button
-                        android:id="@+id/btn_reset_timer"
-                        style="@style/Widget.MaterialComponents.Button.TextButton"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="@string/btn_reset"
-                        android:textColor="#9E9E9E" />
-                </LinearLayout>
+                    android:text="Общая дистанция: 0 м"
+                    android:textColor="#1E88E5"
+                    android:textStyle="bold"
+                    android:layout_marginTop="4dp"/>
 
                 <View
                     android:layout_width="match_parent"
                     android:layout_height="1dp"
-                    android:layout_marginVertical="20dp"
-                    android:background="#EEEEEE" />
+                    android:background="#E2E8F0"
+                    android:layout_marginVertical="16dp"/>
 
-                <Spinner
-                    android:id="@+id/spinner_distance"
+                <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:layout_gravity="start"
-                    android:entries="@array/swimming_styles_array" />
+                    android:text="🏁 РАЗМИНКА (WARM-UP)"
+                    android:textSize="12sp"
+                    android:textStyle="bold"
+                    android:textColor="#E65100"/>
+                <TextView
+                    android:id="@+id/tv_block_warmup"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="• Не выбрано"
+                    android:textColor="#486581"
+                    android:layout_marginTop="4dp"
+                    android:layout_marginBottom="16dp"/>
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="🏊‍♂️ ОСНОВНАЯ СЕРИЯ (MAIN SET)"
+                    android:textSize="12sp"
+                    android:textStyle="bold"
+                    android:textColor="#1565C0"/>
+                <TextView
+                    android:id="@+id/tv_block_main"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="• Нажмите кнопку ниже, чтобы собрать"
+                    android:textColor="#486581"
+                    android:layout_marginTop="4dp"
+                    android:layout_marginBottom="16dp"/>
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="🛑 ЗАМИНКА (COOL-DOWN)"
+                    android:textSize="12sp"
+                    android:textStyle="bold"
+                    android:textColor="#006064"/>
+                <TextView
+                    android:id="@+id/tv_block_cooldown"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="• Не выбрано"
+                    android:textColor="#486581"
+                    android:layout_marginTop="4dp"
+                    android:layout_marginBottom="16dp"/>
 
                 <Button
-                    android:id="@+id/btn_save_measure"
+                    android:id="@+id/btn_action_primary"
                     android:layout_width="match_parent"
-                    android:layout_height="60dp"
-                    android:layout_marginTop="16dp"
-                    android:text="@string/btn_save_result"
-                    android:textSize="16sp"
-                    app:backgroundTint="#008CFF"
-                    app:cornerRadius="16dp" />
+                    android:layout_height="55dp"
+                    android:text="Сгенерировать ИИ-план"
+                    android:backgroundTint="#1E88E5"
+                    app:cornerRadius="16dp"
+                    android:textAllCaps="false"/>
+
             </LinearLayout>
         </androidx.cardview.widget.CardView>
 
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:orientation="horizontal">
+            android:orientation="horizontal"
+            android:weightSum="2"
+            android:layout_marginBottom="20dp">
 
-            <TextView
+            <Button
+                android:id="@+id/btn_schedule_workout"
                 android:layout_width="0dp"
-                android:layout_height="wrap_content"
+                android:layout_height="55dp"
                 android:layout_weight="1"
-                android:text="@string/last_swims_title"
-                android:textColor="#1976D2"
-                android:textStyle="bold" />
+                android:layout_marginEnd="6dp"
+                android:text="Запланировать 📅"
+                android:backgroundTint="#E3F2FD"
+                android:textColor="#1E88E5"
+                app:cornerRadius="16dp"
+                android:textAllCaps="false"
+                android:visibility="gone"/>
 
-            <TextView
-                android:id="@+id/tv_stats_count"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="@string/total_swims_count"
-                android:textColor="#9E9E9E"
-                android:textSize="12sp" />
+            <Button
+                android:id="@+id/btn_complete_now"
+                android:layout_width="0dp"
+                android:layout_height="55dp"
+                android:layout_weight="1"
+                android:layout_marginStart="6dp"
+                android:text="Выполнить сейчас! ✅"
+                android:backgroundTint="#E8F5E9"
+                android:textColor="#2E7D32"
+                app:cornerRadius="16dp"
+                android:textAllCaps="false"
+                android:visibility="gone"/>
         </LinearLayout>
 
-        <androidx.recyclerview.widget.RecyclerView
-            android:id="@+id/rv_results"
+        <androidx.cardview.widget.CardView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="8dp"
-            android:nestedScrollingEnabled="false" />
+            app:cardCornerRadius="32dp"
+            android:layout_marginBottom="20dp">
 
-        <Button
-            android:id="@+id/btn_delete_measure"
-            style="@style/Widget.MaterialComponents.Button.TextButton"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="8dp"
-            android:text="@string/btn_delete_measure"
-            android:textColor="#F44336" />
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:padding="20dp"
+                android:gravity="center">
 
-        <View
-            android:layout_width="match_parent"
-            android:layout_height="50dp" />
+                <TextView
+                    android:id="@+id/tv_timer"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="00:00:00"
+                    android:textSize="42sp"
+                    android:textColor="#102A43"
+                    android:textStyle="bold"/>
+
+                <LinearLayout
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:layout_marginTop="12dp">
+                    <Button android:id="@+id/btn_timer_start" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="СТАРТ" android:backgroundTint="#4CAF50" android:layout_marginEnd="8dp"/>
+                    <Button android:id="@+id/btn_timer_pause" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="СТОП" android:backgroundTint="#F44336" android:layout_marginEnd="8dp"/>
+                    <Button android:id="@+id/btn_timer_reset" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="СБРОС" android:backgroundTint="#9E9E9E"/>
+                </LinearLayout>
+
+                <Spinner
+                    android:id="@+id/spinner_styles"
+                    android:layout_width="match_parent"
+                    android:layout_height="45dp"
+                    android:layout_marginTop="16dp"
+                    android:background="@android:drawable/btn_dropdown"/>
+
+                <Button
+                    android:id="@+id/btn_save_workout_results"
+                    android:layout_width="match_parent"
+                    android:layout_height="50dp"
+                    android:layout_marginTop="12dp"
+                    android:text="Сохранить заплыв в Аналитику"
+                    android:backgroundTint="#00838F"
+                    android:textAllCaps="false"/>
+            </LinearLayout>
+        </androidx.cardview.widget.CardView>
 
     </LinearLayout>
 </androidx.core.widget.NestedScrollView>

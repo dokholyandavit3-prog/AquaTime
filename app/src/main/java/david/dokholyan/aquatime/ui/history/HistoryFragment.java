@@ -26,7 +26,7 @@ public class HistoryFragment extends Fragment {
         historyContainer = view.findViewById(R.id.history_list);
         goalsContainer = view.findViewById(R.id.goals_container);
 
-        // Кнопка назад
+
         view.findViewById(R.id.btn_back).setOnClickListener(v -> requireActivity().onBackPressed());
 
         loadData();
@@ -36,7 +36,7 @@ public class HistoryFragment extends Fragment {
     private void loadData() {
         SharedPreferences prefs = requireActivity().getSharedPreferences("AquaTime", Context.MODE_PRIVATE);
 
-        // 1. Загрузка текущих целей (Planner)
+
         String plannerData = prefs.getString("planner", "");
         if (!plannerData.isEmpty()) {
             String[] goals = plannerData.split("\n");
@@ -47,13 +47,12 @@ public class HistoryFragment extends Fragment {
             }
         }
 
-        // 2. Загрузка выполненных тренировок
-        // Используем all_res, куда сохраняются данные из твоего конструктора
+
         String historyData = prefs.getString("all_res", "");
         if (!historyData.isEmpty()) {
             String[] results = historyData.split(";");
             for (String res : results) {
-                // Если данные сохранены как "500|10:00|14.04.2026", приводим к красивому виду
+
                 String formattedRes = formatHistoryText(res);
                 addCardToContainer(historyContainer, formattedRes, R.color.aqua_primary);
             }
@@ -77,10 +76,10 @@ public class HistoryFragment extends Fragment {
         MaterialCardView card = new MaterialCardView(requireContext());
         LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
-        params.setMargins(0, 0, 0, 16); // Отступ между карточками
+        params.setMargins(0, 0, 0, 16);
         card.setLayoutParams(params);
-        card.setRadius(32f); // Большое закругление как на фото
-        card.setCardElevation(0f); // На скрине карточки плоские с контуром или легкой тенью
+        card.setRadius(32f);
+        card.setCardElevation(0f);
         card.setStrokeWidth(2);
         card.setStrokeColor(getResources().getColor(R.color.aqua_primary));
         card.setContentPadding(40, 32, 40, 32);

@@ -24,6 +24,7 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.util.Locale;
 
 import david.dokholyan.aquatime.R;
 
@@ -70,7 +71,6 @@ public class ProfileFragment extends Fragment {
         v.findViewById(R.id.btn_edit_profile).setOnClickListener(view ->
                 Navigation.findNavController(view).navigate(R.id.editProfileFragment));
 
-        // ПЕРЕХОД В НАСТРОЙКИ
         v.findViewById(R.id.btn_settings).setOnClickListener(view ->
                 Navigation.findNavController(view).navigate(R.id.settingsFragment));
 
@@ -103,16 +103,51 @@ public class ProfileFragment extends Fragment {
                 prefs.getString("weight", "-") + " кг\n🏊 Стиль: " +
                 prefs.getString("style", "Не выбран"));
 
-        int meters = prefs.getInt("total_meters", 0);
-        int trainings = prefs.getInt("trainings_count", 0);
-        int xp = meters + (trainings * 50);
-        tvMainRating.setText(String.valueOf(xp));
 
-        if (xp < 1000) tvLevel.setText("Уровень: Beginner 🟢");
-        else if (xp < 5000) tvLevel.setText("Уровень: Amateur 🔵");
-        else tvLevel.setText("Уровень: Pro 🟣");
+        int fifaRating = calculateFifaRating();
+        tvMainRating.setText(String.valueOf(fifaRating));
+
+
+        if (fifaRating < 30) {
+            tvLevel.setText("Карточка: Бронза 🟫");
+        } else if (fifaRating < 65) {
+            tvLevel.setText("Карточка: Серебро ⬜");
+        } else if (fifaRating < 85) {
+            tvLevel.setText("Карточка: Золото 🟨");
+        } else {
+            tvLevel.setText("Карточка: Элита 💎");
+        }
 
         renderProfileImage();
+    }
+
+    private int calculateFifaRating() {
+        String data = prefs.getString("all_res", "");
+        if (data.isEmpty()) return 1;
+
+        String[] entries = data.split(";");
+        int totalTrainings = entries.length;
+        int totalMeters = 0;
+
+        for (String entry : entries) {
+            try {
+                String[] p = entry.split("\\|");
+                int meters = Integer.parseInt(p[0].trim());
+                totalMeters += meters;
+            } catch (Exception ignored) {}
+        }
+
+
+        double ratingPoints = (totalTrainings * 50) + (totalMeters * 0.1);
+
+
+        int rating = (int) (Math.sqrt(ratingPoints / 100.0) + 1);
+
+
+        if (rating < 1) rating = 1;
+        if (rating > 99) rating = 99;
+
+        return rating;
     }
 
     private void showLogoutDialog() {
@@ -219,7 +254,7 @@ public class ProfileFragment extends Fragment {
                 "😵","🥴","😠","😡","🤬","😷","🤒","🤕","🫡","🥳",
                 "😇","🤠","🤡","👻","💀","☠️","👽","🤖","👾","🎃",
                 "⚽","🏀","🏈","⚾","🥎","🎾","🏐","🏉","🥏","🎱",
-                "🏓","🏸","🏒","🏑","🥍","🏏","🥅","⛳","🪁","🏹",
+                "🏓","🏸","🏒","🏑","🥍","👑","🥅","⛳","🪁","🏹",
                 "🎣","🤿","🥊","🥋","🎽","🛹","🛷","⛸️","🥌","🎿",
                 "⛷️","🏂","🪂","🏋️","🤼","🤸","⛹️","🤺","🤾","🏌️",
                 "🏇","🧘","🏄","🏊","🏊‍♂️","🏊‍♀️","🚣","🚴","🚴‍♂️","🚴‍♀️",
@@ -228,7 +263,7 @@ public class ProfileFragment extends Fragment {
                 "🐼","🐨","🐯","🦁","🐮","🐷","🐽","🐸","🐵","🙈",
                 "🙉","🙊","🐒","🐔","🐧","🐦","🐤","🐣","🐥","🦆",
                 "🦅","🦉","🦇","🐺","🐗","🐴","🦄","🐝","🪱","🐛",
-                "🦋","🐌","🐞","🐜","🪰","🪲","🪳","🦟","🦗","🕷️",
+                "🦋","🐌","🐞","🐜","🪰","🪲","🪳","🦟","👑","🕷️",
                 "🕸️","🦂","🐢","🐍","🦎","🦖","🦕","🐙","🦑","🪼",
                 "🦐","🦞","🦀","🐡","🐠","🐟","🐬","🐳","🐋","🦈",
                 "🐊","🐅","🐆","🦓","🦍","🦧","🐘","🦛","🦏","🐪",
