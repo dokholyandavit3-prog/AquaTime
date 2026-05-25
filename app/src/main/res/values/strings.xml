@@ -20,8 +20,13 @@
     <string name="default_coach_advice">Для лучшего скольжения держи ладонь плоской, но не напряженной.</string>
     <string name="dashboard_my_pool">МОЙ БАССЕЙН</string>
     <string name="dashboard_no_pool_selected">Бассейн не выбран 🏊‍♂️</string>
+    <string name="meters_format">%d м</string>
+    <string name="greeting_morning">Доброе утро! 🌅</string>
+    <string name="greeting_afternoon">Добрый день! 🌊</string>
+    <string name="greeting_evening">Добрый вечер! 🌙</string>
 
     <!-- Training -->
+    <string name="training_page_title">ТРЕНИРОВКА</string>
     <string name="tip_of_day">💡 Совет дня</string>
     <string name="default_training_tip">Совет: Не забывайте делать разминку перед прыжком в воду!</string>
     <string name="btn_ai_plan">🤖 ПЛАН НА СЕГОДНЯ</string>
@@ -29,23 +34,36 @@
     <string name="btn_start">СТАРТ</string>
     <string name="btn_pause">ПАУЗА</string>
     <string name="btn_reset">СБРОС</string>
-
-    <!-- Исправленная навигация (согласно ошибке в menu) -->
-    <string name="nav_home">Главная</string>
-    <string name="nav_training">Тренировка</string>
-    <string name="nav_analytics">Аналитика</string>
-    <string name="nav_profile">Профиль</string>
-
-    <!-- Недостающие строки для fragment_training.xml -->
     <string name="training_plan_title">План тренировки</string>
     <string name="ai_plan_hint">Здесь появится ваш план, созданный ИИ</string>
     <string name="manual_plan_title">Ручной ввод</string>
     <string name="hint_manual_dist">Дистанция (м)</string>
     <string name="btn_add_to_plan">Добавить в план</string>
-    <string name="btn_schedule">Запланировать</string>
     <string name="last_swims_title">Последние заплывы</string>
     <string name="total_swims_count">Всего заплывов: %1$d</string>
     <string name="btn_delete_measure">Удалить замер</string>
+    <string name="btn_mode_ai_text">Готовые</string>
+    <string name="btn_mode_constructor_text">Конструктор</string>
+    <string name="title_mode_ai">Готовые тренировки</string>
+    <string name="title_mode_constructor">Кастомный конструктор</string>
+    <string name="btn_ai_change_reset">Поменять / Сбросить план 🔄</string>
+    <string name="btn_ai_select_plan">Выбрать готовый план</string>
+    <string name="btn_constructor_assemble">Собрать тренировку целиком 📝</string>
+    <string name="dialog_mgmt_title">Управление тренировкой</string>
+    <string name="toast_plan_cleared">План успешно очищен!</string>
+    <string name="select_mode_label">ВЫБЕРИТЕ РЕЖИМ</string>
+    <string name="block_warmup_title">🏁 РАЗМИНКА (WARM-UP)</string>
+    <string name="block_main_title">🏊‍♂️ ОСНОВНАЯ СЕРИЯ (MAIN SET)</string>
+    <string name="block_cooldown_title">🛑 ЗАМИНКА (COOL-DOWN)</string>
+    <string name="btn_schedule">Запланировать 📅</string>
+    <string name="btn_complete_now">Выполнить сейчас! ✅</string>
+
+
+    <string name="nav_home">Главная</string>
+    <string name="nav_training">Тренировка</string>
+    <string name="nav_analytics">Аналитика</string>
+    <string name="nav_profile">Профиль</string>
+
 
     <!-- Analytics Screen -->
     <string name="stats_title">Статистика</string>
@@ -62,6 +80,18 @@
     <string name="hint_goal">Введите цель тренировки…</string>
     <string name="btn_add_goal">ДОБАВИТЬ ЦЕЛЬ</string>
     <string name="btn_champions_advice">СОВЕТЫ ОТ ЧЕМПИОНОВ 🏆</string>
+    <string name="total_trainings_label">Всего тренировок</string>
+    <string name="archive_title">Архив прошлых недель</string>
+    <string name="empty_archive_msg">История прошлых недель пуста</string>
+    <string name="training_count_form">%1$d %2$s</string>
+    <string name="week_record_format">Неделя %1$d (%2$d г) | %3$d м | %4$s</string>
+    <string name="last_workout_prefix">Последняя: </string>
+    <string name="goal_added_msg">Цель добавлена</string>
+    <string name="btn_hide">Скрыть</string>
+    <string name="btn_details">Подробнее</string>
+    <string name="planner_empty">Нет запланированных целей</string>
+    <string name="total_trainings_title">Всего тренировок</string>
+
     <!-- Settings -->
     <string name="settings_title">Настройки</string>
     <string name="change_theme">🌓 Сменить тему</string>
@@ -103,4 +133,28 @@
     <string name="hint_weight">Вес (кг)</string>
     <string name="hint_achievements">Основные достижения</string>
     <string name="btn_save">💾 Сохранить</string>
+
+    <string-array name="styles_array">
+        <item>Кроль 50м</item>
+        <item>Брасс 50м</item>
+        <item>На спине 50м</item>
+        <item>Баттерфляй 50м</item>
+        <item>Комплекс 100м</item>
+    </string-array>
+    <string-array name="ranks_array">
+        <item>III юн</item>
+        <item>II юн</item>
+        <item>I юн</item>
+        <item>III</item>
+        <item>II</item>
+        <item>I</item>
+        <item>КМС</item>
+        <item>МС</item>
+        <item>МСМК</item>
+    </string-array>
+    <string name="word_training_1">тренировка</string>
+    <string name="word_training_2">тренировки</string>
+    <string name="word_training_3">тренировок</string>
+    <string name="rank_status_sec">с</string>
+
 </resources>

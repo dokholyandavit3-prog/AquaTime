@@ -17,7 +17,6 @@ public class MainActivity extends AppCompatActivity {
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
-
         applySavedSettings();
 
         super.onCreate(savedInstanceState);
@@ -27,7 +26,6 @@ public class MainActivity extends AppCompatActivity {
         NavController navController = Navigation.findNavController(this, R.id.nav_host_fragment);
         NavigationUI.setupWithNavController(bottomNav, navController);
 
-        // Проверка авторизации
         boolean isGuest = getIntent().getBooleanExtra("isGuest", false);
         if (!isGuest && com.google.firebase.auth.FirebaseAuth.getInstance().getCurrentUser() == null) {
             startActivity(new Intent(this, LoginActivity.class));
@@ -38,17 +36,14 @@ public class MainActivity extends AppCompatActivity {
     private void applySavedSettings() {
         SharedPreferences prefs = getSharedPreferences("AquaTime", Context.MODE_PRIVATE);
 
-
         int mode = prefs.getInt("theme_mode", AppCompatDelegate.MODE_NIGHT_FOLLOW_SYSTEM);
         AppCompatDelegate.setDefaultNightMode(mode);
-
 
         String lang = prefs.getString("app_lang", "ru");
         Locale locale = new Locale(lang);
         Locale.setDefault(locale);
         Configuration config = new Configuration();
         config.setLocale(locale);
-
 
         getResources().updateConfiguration(config, getResources().getDisplayMetrics());
     }

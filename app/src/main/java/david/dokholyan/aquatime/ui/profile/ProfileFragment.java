@@ -12,6 +12,7 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.*;
+
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
@@ -19,6 +20,10 @@ import androidx.annotation.Nullable;
 import androidx.appcompat.app.AlertDialog;
 import androidx.fragment.app.Fragment;
 import androidx.navigation.Navigation;
+
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseUser;
+import com.google.firebase.database.FirebaseDatabase;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -35,6 +40,9 @@ public class ProfileFragment extends Fragment {
     private SharedPreferences prefs;
     private ActivityResultLauncher<String> imagePicker;
     private static final String DEFAULT_EMOJI = "🏊‍♂️";
+
+
+    private ProgressBar pbFreestyle, pbBreast, pbFly;
 
     @Nullable
     @Override
@@ -68,6 +76,11 @@ public class ProfileFragment extends Fragment {
         tvCountry = v.findViewById(R.id.tv_country);
         imgProfile = v.findViewById(R.id.img_avatar);
 
+
+        pbFreestyle = v.findViewById(R.id.pb_freestyle);
+        pbBreast = v.findViewById(R.id.pb_breast);
+        pbFly = v.findViewById(R.id.pb_fly);
+
         v.findViewById(R.id.btn_edit_profile).setOnClickListener(view ->
                 Navigation.findNavController(view).navigate(R.id.editProfileFragment));
 
@@ -83,8 +96,7 @@ public class ProfileFragment extends Fragment {
     }
 
     private void loadProfileData() {
-        com.google.firebase.auth.FirebaseUser currentUser =
-                com.google.firebase.auth.FirebaseAuth.getInstance().getCurrentUser();
+        FirebaseUser currentUser = FirebaseAuth.getInstance().getCurrentUser();
 
         String firstName = prefs.getString("firstName", "David");
         String lastName = prefs.getString("lastName", "");
@@ -92,38 +104,128 @@ public class ProfileFragment extends Fragment {
 
         if (currentUser != null && currentUser.getEmail() != null && !currentUser.getEmail().isEmpty()) {
             tvEmail.setText(currentUser.getEmail());
+
+            String userId = currentUser.getUid();
+            FirebaseDatabase.getInstance().getReference("users").child(userId).get()
+                    .addOnSuccessListener(snapshot -> {
+                        if (snapshot.exists() && isAdded() && getContext() != null) {
+                            SharedPreferences.Editor editor = prefs.edit();
+
+                            if (snapshot.hasChild("all_res")) {
+                                editor.putString("all_res", snapshot.child("all_res").getValue(String.class));
+                            }
+                            if (snapshot.hasChild("total_meters")) {
+                                Integer tm = snapshot.child("total_meters").getValue(Integer.class);
+                                if (tm != null) editor.putInt("total_meters", tm);
+                            }
+                            if (snapshot.hasChild("trainings_count")) {
+                                Integer tc = snapshot.child("trainings_count").getValue(Integer.class);
+                                if (tc != null) editor.putInt("trainings_count", tc);
+                            }
+                            editor.apply();
+
+                            int updatedRating = calculateFifaRating();
+                            tvMainRating.setText(String.valueOf(updatedRating));
+                            updateLevelCardText(updatedRating);
+
+                            calculateSwimSkills();
+                        }
+                    }).addOnFailureListener(Throwable::printStackTrace);
+
         } else {
-            tvEmail.setText("Гостевой режим");
+            tvEmail.setText(isEnglish() ? "Guest Mode" : "Гостевой режим");
         }
 
         String nation = prefs.getString("nation", "Армения 🇦🇲");
         tvCountry.setText("📍 " + nation);
 
+        String styleLabel = isEnglish() ? "Style: " : "Стиль: ";
         tvDetails.setText("📏 " + prefs.getString("height", "-") + " см | ⚖ " +
-                prefs.getString("weight", "-") + " кг\n🏊 Стиль: " +
-                prefs.getString("style", "Не выбран"));
-
+                prefs.getString("weight", "-") + " кг\n🏊 " + styleLabel +
+                prefs.getString("style", isEnglish() ? "Not selected" : "Не выбран"));
 
         int fifaRating = calculateFifaRating();
         tvMainRating.setText(String.valueOf(fifaRating));
+        updateLevelCardText(fifaRating);
 
 
-        if (fifaRating < 30) {
-            tvLevel.setText("Карточка: Бронза 🟫");
-        } else if (fifaRating < 65) {
-            tvLevel.setText("Карточка: Серебро ⬜");
-        } else if (fifaRating < 85) {
-            tvLevel.setText("Карточка: Золото 🟨");
-        } else {
-            tvLevel.setText("Карточка: Элита 💎");
-        }
+        calculateSwimSkills();
 
         renderProfileImage();
     }
 
+
+    private void calculateSwimSkills() {
+        if (pbFreestyle == null || pbBreast == null || pbFly == null) return;
+
+        String data = prefs.getString("all_res", "");
+
+
+        if (data.isEmpty()) {
+            pbFreestyle.setProgress(10);
+            pbBreast.setProgress(10);
+            pbFly.setProgress(10);
+            return;
+        }
+
+        String[] entries = data.split(";");
+        int crawlMeters = 0;
+        int breastMeters = 0;
+        int flyMeters = 0;
+
+        for (String entry : entries) {
+            try {
+                String[] p = entry.split("\\|");
+                if (p.length < 2) continue;
+
+                int meters = Integer.parseInt(p[0].trim());
+                String workoutStyle = p[1].toLowerCase();
+
+
+                if (workoutStyle.contains("вольный") || workoutStyle.contains("кроль") || workoutStyle.contains("freestyle") || workoutStyle.contains("crawl")) {
+                    crawlMeters += meters;
+                } else if (workoutStyle.contains("брасс") || workoutStyle.contains("breaststroke")) {
+                    breastMeters += meters;
+                } else if (workoutStyle.contains("баттерфляй") || workoutStyle.contains("butterfly") || workoutStyle.contains("дельфин")) {
+                    flyMeters += meters;
+                } else {
+
+                    crawlMeters += meters / 3;
+                    breastMeters += meters / 3;
+                    flyMeters += meters / 3;
+                }
+            } catch (Exception ignored) {}
+        }
+
+
+        int maxSkillThreshold = 5000;
+
+        int crawlPercent = Math.min(100, 10 + (crawlMeters * 90 / maxSkillThreshold));
+        int breastPercent = Math.min(100, 10 + (breastMeters * 90 / maxSkillThreshold));
+        int flyPercent = Math.min(100, 10 + (flyMeters * 90 / maxSkillThreshold));
+
+
+        pbFreestyle.setProgress(crawlPercent);
+        pbBreast.setProgress(breastPercent);
+        pbFly.setProgress(flyPercent);
+    }
+
+    private void updateLevelCardText(int rating) {
+        boolean en = isEnglish();
+        if (rating < 55) {
+            tvLevel.setText(en ? "Card: Bronze 🟫" : "Карточка: Бронза 🟫");
+        } else if (rating < 75) {
+            tvLevel.setText(en ? "Card: Silver ⬜" : "Карточка: Серебро ⬜");
+        } else if (rating < 90) {
+            tvLevel.setText(en ? "Card: Gold 🟨" : "Карточка: Золото 🟨");
+        } else {
+            tvLevel.setText(en ? "Card: Elite 💎" : "Карточка: Элита 💎");
+        }
+    }
+
     private int calculateFifaRating() {
         String data = prefs.getString("all_res", "");
-        if (data.isEmpty()) return 1;
+        if (data.isEmpty()) return 45;
 
         String[] entries = data.split(";");
         int totalTrainings = entries.length;
@@ -137,32 +239,68 @@ public class ProfileFragment extends Fragment {
             } catch (Exception ignored) {}
         }
 
+        double experiencePoints = Math.min(15.0, totalTrainings * 0.5);
+        double distancePoints = Math.pow(totalMeters, 0.25) * 7.1;
+        int rating = 45 + (int) (experiencePoints + distancePoints);
 
-        double ratingPoints = (totalTrainings * 50) + (totalMeters * 0.1);
+        if (totalTrainings > 0 && (totalMeters / totalTrainings) >= 1500) {
+            rating += 2;
+        }
 
+        String lastDateStr = prefs.getString("last_completed_date", "");
+        if (!lastDateStr.isEmpty()) {
+            try {
+                java.text.SimpleDateFormat sdf = new java.text.SimpleDateFormat("dd.MM.yyyy", java.util.Locale.getDefault());
+                java.util.Date lastWorkoutDate = sdf.parse(lastDateStr);
 
-        int rating = (int) (Math.sqrt(ratingPoints / 100.0) + 1);
+                if (lastWorkoutDate != null) {
+                    long diffInMs = Math.abs(System.currentTimeMillis() - lastWorkoutDate.getTime());
+                    long diffInDays = diffInMs / (1000 * 60 * 60 * 24);
 
+                    if (diffInDays > 3) {
+                        long lazyDays = diffInDays - 3;
+                        int penalty = (int) (lazyDays * 2);
+                        if (penalty > 15) penalty = 15;
+                        rating -= penalty;
+                    }
+                }
+            } catch (Exception ignored) {}
+        }
 
-        if (rating < 1) rating = 1;
+        if (rating > 85) {
+            int overEightFive = rating - 85;
+            rating = 85 + (overEightFive / 3);
+        }
+
+        if (rating < 45) rating = 45;
         if (rating > 99) rating = 99;
 
         return rating;
     }
 
     private void showLogoutDialog() {
+        boolean en = isEnglish();
+        String title = en ? "Logout Account" : "Выход из аккаунта";
+        String msg = en ? "Are you sure you want to log out? All profile data will be cleared." : "Вы уверены, что хотите выйти? Все данные профиля будут удалены.";
+        String pos = en ? "Log Out" : "Выйти";
+        String neg = en ? "Cancel" : "Отмена";
+
         new AlertDialog.Builder(requireContext())
-                .setTitle("Выход из аккаунта")
-                .setMessage("Вы уверены, что хотите выйти? Все данные профиля будут удалены.")
-                .setPositiveButton("Выйти", (dialog, which) -> performLogout())
-                .setNegativeButton("Отмена", null)
+                .setTitle(title)
+                .setMessage(msg)
+                .setPositiveButton(pos, (dialog, which) -> performLogout())
+                .setNegativeButton(neg, null)
                 .show();
     }
 
     private void performLogout() {
-        com.google.firebase.auth.FirebaseAuth.getInstance().signOut();
         if (prefs != null) {
             prefs.edit().clear().apply();
+        }
+        try {
+            FirebaseAuth.getInstance().signOut();
+        } catch (Exception e) {
+            e.printStackTrace();
         }
         if (getActivity() != null) {
             android.content.Intent intent = new android.content.Intent(getActivity(), david.dokholyan.aquatime.LoginActivity.class);
@@ -234,7 +372,8 @@ public class ProfileFragment extends Fragment {
     }
 
     private void showAvatarSelectionMenu() {
-        String[] options = {"📸 Галерея", "✨ Выбрать Эмодзи"};
+        boolean en = isEnglish();
+        String[] options = en ? new String[]{"📸 Gallery", "✨ Choose Emoji"} : new String[]{"📸 Галерея", "✨ Выбрать Эмодзи"};
         new AlertDialog.Builder(requireContext())
                 .setItems(options, (d, w) -> {
                     if (w == 0) imagePicker.launch("image/*");
@@ -244,33 +383,33 @@ public class ProfileFragment extends Fragment {
 
     private void showEmojiSelectionDialog() {
         final String[] emojis = {
-                "😀","😁","😂","🤣","😃","😄","😅","😆","😉","😊",
-                "😋","😎","😍","😘","🥰","😗","😙","😚","🙂","🤗",
-                "🤩","🤔","🤨","😐","😑","😶","🙄","😏","😣","😥",
-                "😮","🤐","😯","😪","😫","🥱","😴","😌","😛","😜",
-                "😝","🤤","😒","😓","😔","😕","🙃","🫠","🤑","😲",
-                "☹️","🙁","😖","😞","😟","😤","😢","😭","😦","😧",
-                "😨","😩","🤯","😬","😰","😱","🥵","🥶","😳","🤪",
-                "😵","🥴","😠","😡","🤬","😷","🤒","🤕","🫡","🥳",
-                "😇","🤠","🤡","👻","💀","☠️","👽","🤖","👾","🎃",
-                "⚽","🏀","🏈","⚾","🥎","🎾","🏐","🏉","🥏","🎱",
-                "🏓","🏸","🏒","🏑","🥍","👑","🥅","⛳","🪁","🏹",
-                "🎣","🤿","🥊","🥋","🎽","🛹","🛷","⛸️","🥌","🎿",
-                "⛷️","🏂","🪂","🏋️","🤼","🤸","⛹️","🤺","🤾","🏌️",
-                "🏇","🧘","🏄","🏊","🏊‍♂️","🏊‍♀️","🚣","🚴","🚴‍♂️","🚴‍♀️",
-                "🚵","🏃","🏃‍♂️","🏃‍♀️","🚶","💪","🔥","🏆","🥇","🥈",
-                "🥉","🏅","🎖️","🐶","🐱","🐭","🐹","🐰","🦊","🐻",
-                "🐼","🐨","🐯","🦁","🐮","🐷","🐽","🐸","🐵","🙈",
-                "🙉","🙊","🐒","🐔","🐧","🐦","🐤","🐣","🐥","🦆",
-                "🦅","🦉","🦇","🐺","🐗","🐴","🦄","🐝","🪱","🐛",
-                "🦋","🐌","🐞","🐜","🪰","🪲","🪳","🦟","👑","🕷️",
-                "🕸️","🦂","🐢","🐍","🦎","🦖","🦕","🐙","🦑","🪼",
-                "🦐","🦞","🦀","🐡","🐠","🐟","🐬","🐳","🐋","🦈",
-                "🐊","🐅","🐆","🦓","🦍","🦧","🐘","🦛","🦏","🐪",
-                "🐫","🦒","🦘","🦬","🐃","🐂","🐄","🐎","🐖","🐏",
-                "🐑","🦙","🐐","🦌","🐕","🐩","🦮","🐕‍🦺","🐈","🐈‍⬛",
-                "🪶","🐓","🦃","🦤","🦚","🦜","🪽","🐇","🦝","🦨",
-                "🦡","🦫","🦦","🦥","🐁","🐀","🐿️","🦔"
+                "😀", "😁", "😂", "🤣", "😃", "😄", "😅", "😆", "😉", "😊",
+                "😋", "😎", "😍", "😘", "🥰", "😗", "😙", "😚", "🙂", "🤗",
+                "🤩", "🤔", "🤨", "😐", "😑", "😶", "🙄", "😏", "😣", "😥",
+                "😮", "🤐", "😯", "😪", "😫", "🥱", "😴", "😌", "😛", "😜",
+                "😝", "🤤", "😒", "😓", "😔", "😕", "🙃", "🫠", "🤑", "😲",
+                "☹️", "🙁", "😖", "😞", "😟", "😤", "😢", "😭", "😦", "😧",
+                "😨", "😩", "🤯", "😬", "😰", "😱", "🥵", "🥶", "😳", "🤪",
+                "😵", "🥴", "😠", "😡", "🤬", "😷", "🤒", "🤕", "🫡", "🥳",
+                "😇", "🤠", "🤡", "👻", "💀", "☠️", "👽", "🤖", "👾", "🎃",
+                "⚽", "🏀", "🏈", "⚾", "🥎", "🎾", "🏐", "🏉", "🥏", "🎱",
+                "🏓", "🏸", "🏒", "🏑", "🥍", "👑", "🥅", "⛳", "🪁", "🏹",
+                "🎣", "🤿", "🥊", "🥋", "🎽", "🛷", "⛸️", "🥌", "🎿",
+                "⛷️", "🏂", "🪂", "🏋️", "🤼", "🤸", "⛹️", "🌟", "🤾", "🏌️",
+                "🏇", "🧘", "🏄", "🏊", "🏊‍♂️", "🏊‍♀️", "🚣", "🚴", "🚴‍♂️", "🚴‍♀️",
+                "🚵", "🏃", "🏃‍♂️", "🏃‍♀️", "🚶", "💪", "🔥", "🏆", "🥇", "🥈",
+                "🥉", "🏅", "🎖️", "🐶", "🐱", "🐭", "🐹", "🐰", "🦊", "🐻",
+                "🐼", "🐨", "🐯", "🦁", "🐮", "🐷", "🐽", "🐸", "🐵", "🙈",
+                "🙉", "🙊", "🐒", "🐔", "🐧", "🐦", "🐤", "🐣", "🐥", "🦆",
+                "🦅", "🦉", "🦇", "🐺", "🐗", "🐴", "🦄", "🐝", "🪱", "🐛",
+                "🦋", "🐌", "🐞", "🐜", "🪰", "🪲", "🪳", "🦟", "👑", "🕷️",
+                "🕸️", "🦂", "🐢", "🐍", "🦎", "🦖", "🦕", "🐙", "🦑", "🪼",
+                "🦐", "🦞", "🦀", "🐡", "🐠", "🐟", "🐬", "🐳", "🐋", "🦈",
+                "🐊", "🐅", "🐆", "🦓", "🦍", "🦧", "🐘", "🦛", "🦏", "🐪",
+                "🐫", "🦒", "🦘", "🦬", "🐃", "🐂", "🐄", "🐎", "🐖", "🐏",
+                "🐑", "🦙", "🐐", "🦌", "🐕", "🐩", "🦮", "🐕‍🦺", "🐈", "🐈‍⬛",
+                "🪶", "🐓", "🦃", "🦤", "🦚", "🦜", "🪽", "🐇", "🦝", "🦨",
+                "🦡", "🦫", "🦦", "🦥", "🐁", "🐀", "🐿️", "🦔"
         };
 
         GridView gridView = new GridView(requireContext());
@@ -299,9 +438,9 @@ public class ProfileFragment extends Fragment {
         gridView.setAdapter(adapter);
 
         AlertDialog dialog = new AlertDialog.Builder(requireContext())
-                .setTitle("Выберите стиль")
+                .setTitle(isEnglish() ? "Select Emoji" : "Выберите стиль")
                 .setView(gridView)
-                .setNegativeButton("Отмена", null)
+                .setNegativeButton(isEnglish() ? "Cancel" : "Отмена", null)
                 .create();
 
         gridView.setOnItemClickListener((parent, view1, position, id) -> {
@@ -322,10 +461,18 @@ public class ProfileFragment extends Fragment {
             InputStream is = requireContext().getContentResolver().openInputStream(uri);
             File f = new File(requireContext().getFilesDir(), "profile_aqua.jpg");
             OutputStream os = new FileOutputStream(f);
-            byte[] buf = new byte[1024]; int len;
+            byte[] buf = new byte[1024];
+            int len;
             while ((len = is.read(buf)) > 0) os.write(buf, 0, len);
-            os.close(); is.close();
+            os.close();
+            is.close();
             return f.getAbsolutePath();
-        } catch (Exception e) { return null; }
+        } catch (Exception e) {
+            return null;
+        }
+    }
+
+    private boolean isEnglish() {
+        return Locale.getDefault().getLanguage().equalsIgnoreCase("en");
     }
 }

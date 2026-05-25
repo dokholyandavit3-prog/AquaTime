@@ -13,6 +13,17 @@
         android:orientation="vertical"
         android:padding="20dp">
 
+        <TextView
+            android:id="@+id/tv_page_main_title"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="16dp"
+            android:fontFamily="sans-serif-black"
+            android:text="@string/training_page_title"
+            android:textColor="@color/aqua_deep"
+            android:textSize="22sp"
+            android:textStyle="bold" />
+
         <androidx.cardview.widget.CardView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -43,9 +54,10 @@
         </androidx.cardview.widget.CardView>
 
         <TextView
+            android:id="@+id/tv_select_mode_label"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="ВЫБЕРИТЕ РЕЖИМ"
+            android:text="@string/select_mode_label"
             android:textSize="12sp"
             android:textStyle="bold"
             android:textColor="#627D98"
@@ -63,7 +75,7 @@
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
-                android:text="ИИ-План"
+                android:text="ГОТОВЫЕ"
                 android:layout_marginEnd="4dp"
                 style="@style/Widget.MaterialComponents.Button.TextButton"
                 android:backgroundTint="#E3F2FD"/>
@@ -73,16 +85,7 @@
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
-                android:text="Конструктор"
-                android:layout_marginEnd="4dp"
-                style="@style/Widget.MaterialComponents.Button.TextButton"/>
-
-            <Button
-                android:id="@+id/btn_mode_manual"
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:text="Быстрый"
+                android:text="КОНСТРУКТОР"
                 style="@style/Widget.MaterialComponents.Button.TextButton"/>
         </LinearLayout>
 
@@ -103,7 +106,7 @@
                     android:id="@+id/tv_workout_title"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="Комплексная тренировка"
+                    android:text="Готовые тренировки"
                     android:textColor="#102A43"
                     android:textSize="22sp"
                     android:textStyle="bold"/>
@@ -124,6 +127,7 @@
                     android:layout_marginVertical="16dp"/>
 
                 <TextView
+                    android:id="@+id/tv_label_warmup"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="🏁 РАЗМИНКА (WARM-UP)"
@@ -134,12 +138,13 @@
                     android:id="@+id/tv_block_warmup"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:text="• Не выбрано"
+                    android:text="Нажми кнопку ниже, чтобы выбрать готовый план"
                     android:textColor="#486581"
                     android:layout_marginTop="4dp"
                     android:layout_marginBottom="16dp"/>
 
                 <TextView
+                    android:id="@+id/tv_label_main"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="🏊‍♂️ ОСНОВНАЯ СЕРИЯ (MAIN SET)"
@@ -150,12 +155,13 @@
                     android:id="@+id/tv_block_main"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:text="• Нажмите кнопку ниже, чтобы собрать"
+                    android:text="Нажми кнопку ниже, чтобы выбрать готовый план"
                     android:textColor="#486581"
                     android:layout_marginTop="4dp"
                     android:layout_marginBottom="16dp"/>
 
                 <TextView
+                    android:id="@+id/tv_label_cooldown"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="🛑 ЗАМИНКА (COOL-DOWN)"
@@ -166,7 +172,7 @@
                     android:id="@+id/tv_block_cooldown"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:text="• Не выбрано"
+                    android:text="Нажми кнопку ниже, чтобы выбрать готовый план"
                     android:textColor="#486581"
                     android:layout_marginTop="4dp"
                     android:layout_marginBottom="16dp"/>
@@ -175,7 +181,7 @@
                     android:id="@+id/btn_action_primary"
                     android:layout_width="match_parent"
                     android:layout_height="55dp"
-                    android:text="Сгенерировать ИИ-план"
+                    android:text="Выбрать готовый план"
                     android:backgroundTint="#1E88E5"
                     app:cornerRadius="16dp"
                     android:textAllCaps="false"/>
@@ -267,5 +273,8 @@
             </LinearLayout>
         </androidx.cardview.widget.CardView>
 
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="30dp" />
     </LinearLayout>
 </androidx.core.widget.NestedScrollView>

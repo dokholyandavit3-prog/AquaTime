@@ -61,4 +61,15 @@
         android:name="david.dokholyan.aquatime.ui.PoolsMapFragment"
         android:label="Pools Map"
         tools:layout="@layout/fragment_pools_map" />
+    <fragment
+        android:id="@+id/weeksArchiveFragment"
+        android:name="david.dokholyan.aquatime.ui.WeeksArchiveFragment"
+        android:label="WeeksArchiveFragment"
+        tools:layout="@layout/fragment_weeks_archive" />
+
+    <fragment
+        android:id="@+id/stopwatchHistoryFragment"
+        android:name="david.dokholyan.aquatime.ui.StopwatchHistoryFragment"
+        android:label="StopwatchHistoryFragment"
+        tools:layout="@layout/fragment_stopwatch_history" />
 </navigation>

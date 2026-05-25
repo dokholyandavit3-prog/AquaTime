@@ -12,6 +12,7 @@ import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
 import androidx.navigation.Navigation;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Locale;
 import david.dokholyan.aquatime.R;
 
@@ -20,12 +21,15 @@ public class EditProfileFragment extends Fragment {
     private EditText etFirst, etLast, etHeight, etWeight, etAchievements;
     private Spinner spinStyle, spinNation;
     private SharedPreferences prefs;
+    private boolean isEnglish;
 
     @Nullable
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.fragment_edit_profile, container, false);
         prefs = requireActivity().getSharedPreferences("AquaTime", Context.MODE_PRIVATE);
+
+        isEnglish = getString(R.string.nav_home).equals("Home");
 
         initFields(view);
         setupSpinners();
@@ -48,15 +52,23 @@ public class EditProfileFragment extends Fragment {
     }
 
     private void setupSpinners() {
-        String[] styles = {"Кроль", "Брасс", "Баттерфляй", "Спина", "Комплекс"};
-        spinStyle.setAdapter(new ArrayAdapter<>(getContext(), android.R.layout.simple_spinner_dropdown_item, styles));
+        String[] styles = isEnglish ?
+                new String[]{"Freestyle", "Breaststroke", "Butterfly", "Backstroke", "Individual Medley"} :
+                new String[]{"Кроль", "Брасс", "Баттерфляй", "Спина", "Комплекс"};
 
-        ArrayList<String> countries = new ArrayList<>();
-        for (String code : Locale.getISOCountries()) {
-            Locale l = new Locale("", code);
-            countries.add(l.getDisplayCountry());
+        if (getContext() != null) {
+            spinStyle.setAdapter(new ArrayAdapter<>(getContext(), android.R.layout.simple_spinner_dropdown_item, styles));
+
+            ArrayList<String> countries = new ArrayList<>();
+            Locale targetLocale = isEnglish ? Locale.ENGLISH : new Locale("ru");
+
+            for (String code : Locale.getISOCountries()) {
+                Locale l = new Locale("", code);
+                countries.add(l.getDisplayCountry(targetLocale));
+            }
+            Collections.sort(countries);
+            spinNation.setAdapter(new ArrayAdapter<>(getContext(), android.R.layout.simple_spinner_dropdown_item, countries));
         }
-        spinNation.setAdapter(new ArrayAdapter<>(getContext(), android.R.layout.simple_spinner_dropdown_item, countries));
     }
 
     private void loadCurrentData() {
@@ -65,6 +77,21 @@ public class EditProfileFragment extends Fragment {
         etHeight.setText(prefs.getString("height", ""));
         etWeight.setText(prefs.getString("weight", ""));
         etAchievements.setText(prefs.getString("achievements", ""));
+
+        String savedStyle = prefs.getString("style", "");
+        String savedNation = prefs.getString("nation", "");
+
+        if (!savedStyle.isEmpty() && spinStyle.getAdapter() != null) {
+            ArrayAdapter<String> adapter = (ArrayAdapter<String>) spinStyle.getAdapter();
+            int pos = adapter.getPosition(savedStyle);
+            if (pos >= 0) spinStyle.setSelection(pos);
+        }
+
+        if (!savedNation.isEmpty() && spinNation.getAdapter() != null) {
+            ArrayAdapter<String> adapter = (ArrayAdapter<String>) spinNation.getAdapter();
+            int pos = adapter.getPosition(savedNation);
+            if (pos >= 0) spinNation.setSelection(pos);
+        }
     }
 
     private void saveAndExit(View v) {
@@ -78,7 +105,8 @@ public class EditProfileFragment extends Fragment {
                 .putString("achievements", etAchievements.getText().toString())
                 .apply();
 
-        Toast.makeText(getContext(), "Профиль обновлен", Toast.LENGTH_SHORT).show();
+        String message = isEnglish ? "Profile updated" : "Профиль обновлен";
+        Toast.makeText(getContext(), message, Toast.LENGTH_SHORT).show();
         Navigation.findNavController(v).popBackStack();
     }
 }

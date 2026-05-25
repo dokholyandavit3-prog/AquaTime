@@ -6,9 +6,11 @@
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
+    <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM" />
 
     <application
-        android:name=".AquaTimeApp" android:allowBackup="true"
+        android:name=".AquaTimeApp"
+        android:allowBackup="true"
         android:icon="@mipmap/ic_launcher"
         android:label="@string/app_name"
         android:supportsRtl="true"
@@ -30,9 +32,14 @@
 
         <activity android:name=".MainActivity" />
         <activity android:name=".LoginActivity" />
-
-        <receiver android:name=".ui.training.TrainingReminderReceiver"
-            android:exported="false" />
+        <activity android:name=".RegisterActivity" /> <receiver android:name=".ui.training.TrainingReminderReceiver"
+        android:exported="false">
+        <intent-filter>
+            <action android:name="david.dokholyan.aquatime.START_TRAINING" />
+            <action android:name="david.dokholyan.aquatime.END_TRAINING" />
+            <action android:name="david.dokholyan.aquatime.CONFIRM_FINISH_ACTION" />
+        </intent-filter>
+    </receiver>
 
     </application>
 </manifest>

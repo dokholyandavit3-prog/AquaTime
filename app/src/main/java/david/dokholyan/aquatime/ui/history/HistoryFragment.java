@@ -26,7 +26,6 @@ public class HistoryFragment extends Fragment {
         historyContainer = view.findViewById(R.id.history_list);
         goalsContainer = view.findViewById(R.id.goals_container);
 
-
         view.findViewById(R.id.btn_back).setOnClickListener(v -> requireActivity().onBackPressed());
 
         loadData();
@@ -35,7 +34,6 @@ public class HistoryFragment extends Fragment {
 
     private void loadData() {
         SharedPreferences prefs = requireActivity().getSharedPreferences("AquaTime", Context.MODE_PRIVATE);
-
 
         String plannerData = prefs.getString("planner", "");
         if (!plannerData.isEmpty()) {
@@ -47,12 +45,10 @@ public class HistoryFragment extends Fragment {
             }
         }
 
-
         String historyData = prefs.getString("all_res", "");
         if (!historyData.isEmpty()) {
             String[] results = historyData.split(";");
             for (String res : results) {
-
                 String formattedRes = formatHistoryText(res);
                 addCardToContainer(historyContainer, formattedRes, R.color.aqua_primary);
             }
@@ -63,8 +59,8 @@ public class HistoryFragment extends Fragment {
         try {
             String[] parts = rawData.split("\\|");
             if (parts.length >= 3) {
-                // Формат: "Кроль 50м | 00:31:51 (14.04 15:50)"
-                return parts[0].trim() + "м | " + parts[1].trim() + " (" + parts[2].trim() + ")";
+
+                return parts[0].trim() + "м (" + parts[2].trim() + ")";
             }
         } catch (Exception e) {
             return rawData;

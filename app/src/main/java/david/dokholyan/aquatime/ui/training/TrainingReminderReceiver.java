@@ -9,98 +9,109 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Build;
 import androidx.core.app.NotificationCompat;
-import david.dokholyan.aquatime.MainActivity;
 import david.dokholyan.aquatime.R;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Locale;
 
 public class TrainingReminderReceiver extends BroadcastReceiver {
-    private static final String CHANNEL_ID = "training_channel";
+
+    private static final String CHANNEL_ID = "aquatime_reminders_channel";
+    private static final String ACTION_START = "david.dokholyan.aquatime.START_TRAINING";
+    private static final String ACTION_END = "david.dokholyan.aquatime.END_TRAINING";
+    private static final String ACTION_CONFIRM = "david.dokholyan.aquatime.CONFIRM_FINISH_ACTION";
 
     @Override
     public void onReceive(Context context, Intent intent) {
-        SharedPreferences prefs = context.getSharedPreferences("AquaTime", Context.MODE_PRIVATE);
+        createNotificationChannel(context);
         String action = intent.getAction();
+        if (action == null) return;
 
+        int distance = intent.getIntExtra("distance", 500);
 
-        if ("ACTION_COMPLETE_WORKOUT".equals(action)) {
-            int savedDist = intent.getIntExtra("meters", 1000);
+        if (ACTION_START.equals(action)) {
+            int minutesBefore = intent.getIntExtra("minutes_before", 30);
+            String message = (minutesBefore == 0)
+                    ? "Твоя тренировка начинается прямо сейчас! Пора в бассейн! 🏊‍♂️"
+                    : "У тебя тренировка через " + minutesBefore + " минут!";
 
+            showNotification(context, 801, "AquaTime: Тренировка", message, null);
+
+        } else if (ACTION_END.equals(action)) {
+            // Создаем интент для обработки нажатия кнопки "Да, обновить" прямо из уведомления
+            Intent confirmIntent = new Intent(context, TrainingReminderReceiver.class);
+            confirmIntent.setAction(ACTION_CONFIRM);
+            confirmIntent.putExtra("distance", distance);
+
+            PendingIntent confirmPendingIntent = PendingIntent.getBroadcast(
+                    context, 803, confirmIntent,
+                    PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
+
+            NotificationCompat.Action actionYes = new NotificationCompat.Action.Builder(
+                    android.R.drawable.ic_menu_add, "Да, обновить счетчик", confirmPendingIntent).build();
+
+            showNotification(context, 802, "Тренировка завершена?",
+                    "Ты закончил заплыв на " + distance + " м? Обновить статистику?", actionYes);
+
+        } else if (ACTION_CONFIRM.equals(action)) {
+
+            SharedPreferences prefs = context.getSharedPreferences("AquaTime", Context.MODE_PRIVATE);
+
+            int currentTotalMeters = prefs.getInt("total_meters", 0);
+            int currentTrainingsCount = prefs.getInt("trainings_count", 0);
             int currentWeeklyMeters = prefs.getInt("weekly_meters", 0);
-            int totalTimeInWater = prefs.getInt("total_time_in_water", 0);
-            int currentRankXp = prefs.getInt("user_experience", 0);
 
 
-            int calcMinutes = Math.max(10, savedDist / 50);
-            String date = new SimpleDateFormat("dd.MM", Locale.getDefault()).format(new Date());
+            int calcTotalSeconds = Math.max(60, (distance / 50) * 45);
+            String formattedTime = String.format(Locale.getDefault(), "%02d:%02d", calcTotalSeconds / 60, calcTotalSeconds % 60);
+            String fullDateStr = new SimpleDateFormat("dd.MM.yyyy", Locale.getDefault()).format(new Date());
 
+            String historyEntry = distance + " | " + formattedTime + " | " + fullDateStr;
+            String oldHistory = prefs.getString("all_res", "");
+            String updatedHistory = oldHistory.isEmpty() ? historyEntry : historyEntry + ";" + oldHistory;
 
-            String oldHistory = prefs.getString("measure_history_full", "");
-            String newEntry = "📅 Выполнено по плану | " + savedDist + "м (" + date + ")";
-            String updatedHistory = oldHistory.isEmpty() ? newEntry : newEntry + ";" + oldHistory;
-
-
-            prefs.edit()
-                    .putInt("weekly_meters", currentWeeklyMeters + savedDist)
-                    .putInt("total_time_in_water", totalTimeInWater + calcMinutes)
-                    .putInt("user_experience", currentRankXp + 100) // +100 XP за плановую тренировку!
-                    .putInt("last_dist", savedDist)
-                    .putString("last_date", date)
-                    .putString("last_style", "По расписанию")
-                    .putString("measure_history_full", updatedHistory)
-
-                    .putInt("saved_total_dist", 0)
-                    .putString("saved_wu", "")
-                    .putString("saved_main", "")
-                    .putString("saved_cd", "")
-                    .apply();
+            SharedPreferences.Editor editor = prefs.edit();
+            editor.putString("all_res", updatedHistory);
+            editor.putInt("total_meters", currentTotalMeters + distance);
+            editor.putInt("trainings_count", currentTrainingsCount + 1);
+            editor.putInt("weekly_meters", currentWeeklyMeters + distance);
+            editor.apply();
 
 
             NotificationManager manager = (NotificationManager) context.getSystemService(Context.NOTIFICATION_SERVICE);
             if (manager != null) {
-                manager.cancel(1);
+                manager.cancel(802);
             }
-            return;
         }
+    }
 
-
-        int meters = intent.getIntExtra("meters", 1000);
-        String message = "Твое время тренировки завершено. Ты выполнил заплыв на " + meters + "м?";
-
-        Intent openAppIntent = new Intent(context, MainActivity.class);
-        openAppIntent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
-
-        int flags = Build.VERSION.SDK_INT >= Build.VERSION_CODES.M ?
-                PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE : PendingIntent.FLAG_UPDATE_CURRENT;
-
-        PendingIntent pendingIntent = PendingIntent.getActivity(context, 0, openAppIntent, flags);
-
-
-        Intent yesIntent = new Intent(context, TrainingReminderReceiver.class);
-        yesIntent.setAction("ACTION_COMPLETE_WORKOUT");
-        yesIntent.putExtra("meters", meters);
-
-        int actionFlags = Build.VERSION.SDK_INT >= Build.VERSION_CODES.M ?
-                PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_MUTABLE : PendingIntent.FLAG_UPDATE_CURRENT;
-        PendingIntent yesPendingIntent = PendingIntent.getBroadcast(context, 1, yesIntent, actionFlags);
-
-        NotificationManager manager = (NotificationManager) context.getSystemService(Context.NOTIFICATION_SERVICE);
-
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            NotificationChannel channel = new NotificationChannel(CHANNEL_ID, "AquaTime", NotificationManager.IMPORTANCE_HIGH);
-            if (manager != null) manager.createNotificationChannel(channel);
-        }
-
+    private void showNotification(Context context, int id, String title, String text, NotificationCompat.Action action) {
         NotificationCompat.Builder builder = new NotificationCompat.Builder(context, CHANNEL_ID)
                 .setSmallIcon(R.mipmap.ic_launcher)
-                .setContentTitle("🏊‍♂️ AquaTime: Тренерский отчет")
-                .setContentText(message)
+                .setContentTitle(title)
+                .setContentText(text)
                 .setPriority(NotificationCompat.PRIORITY_HIGH)
-                .setContentIntent(pendingIntent)
-                .setAutoCancel(true)
-                .addAction(android.R.drawable.checkbox_on_background, "Да, выполнил! ✅", yesPendingIntent);
+                .setAutoCancel(true);
 
-        if (manager != null) manager.notify(1, builder.build());
+        if (action != null) {
+            builder.addAction(action);
+        }
+
+        NotificationManager manager = (NotificationManager) context.getSystemService(Context.NOTIFICATION_SERVICE);
+        if (manager != null) {
+            manager.notify(id, builder.build());
+        }
+    }
+
+    private void createNotificationChannel(Context context) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            NotificationChannel channel = new NotificationChannel(
+                    CHANNEL_ID, "Напоминания AquaTime", NotificationManager.IMPORTANCE_HIGH);
+            channel.setDescription("Уведомления о запланированных тренировках");
+            NotificationManager manager = context.getSystemService(NotificationManager.class);
+            if (manager != null) {
+                manager.createNotificationChannel(channel);
+            }
+        }
     }
 }

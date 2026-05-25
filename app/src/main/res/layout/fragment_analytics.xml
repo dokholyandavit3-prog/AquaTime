@@ -17,6 +17,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginBottom="16dp"
+            android:fontFamily="sans-serif-black"
             android:text="@string/stats_title"
             android:textColor="@color/aqua_deep"
             android:textSize="22sp"
@@ -96,13 +97,54 @@
                         android:textStyle="bold" />
 
                     <TextView
+                        android:id="@+id/tv_total_trainings_label"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="Всего тренировок"
+                        android:text="@string/total_trainings_title"
                         android:textSize="10sp" />
                 </LinearLayout>
             </androidx.cardview.widget.CardView>
         </LinearLayout>
+
+        <com.google.android.material.card.MaterialCardView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="16dp"
+            app:cardCornerRadius="20dp">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:padding="16dp">
+
+                <TextView
+                    android:id="@+id/tv_archive_title"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/archive_title"
+                    android:textColor="@color/aqua_deep"
+                    android:textStyle="bold"
+                    android:textSize="14sp" />
+
+                <TextView
+                    android:id="@+id/tv_archive_preview"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="4dp"
+                    android:text="Посмотреть историю тренировок по неделям"
+                    android:textColor="@android:color/darker_gray"
+                    android:textSize="13sp" />
+
+                <Button
+                    android:id="@+id/btn_open_weeks_archive"
+                    style="@style/Widget.MaterialComponents.Button.TextButton"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="end"
+                    android:text="Весь архив" />
+            </LinearLayout>
+        </com.google.android.material.card.MaterialCardView>
 
         <com.google.android.material.card.MaterialCardView
             android:layout_width="match_parent"
@@ -138,6 +180,46 @@
                     android:layout_height="wrap_content"
                     android:layout_gravity="end"
                     android:text="@string/btn_history" />
+            </LinearLayout>
+        </com.google.android.material.card.MaterialCardView>
+
+        <com.google.android.material.card.MaterialCardView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="16dp"
+            app:cardCornerRadius="20dp">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:padding="16dp">
+
+                <TextView
+                    android:id="@+id/tv_stopwatch_history_title"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="История секундомера"
+                    android:textColor="@color/aqua_deep"
+                    android:textStyle="bold"
+                    android:textSize="14sp" />
+
+                <TextView
+                    android:id="@+id/tv_stopwatch_summary"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="4dp"
+                    android:text="Нет сохранённых замеров"
+                    android:textColor="@android:color/darker_gray"
+                    android:textSize="13sp" />
+
+                <Button
+                    android:id="@+id/btn_open_stopwatch_history"
+                    style="@style/Widget.MaterialComponents.Button.TextButton"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="end"
+                    android:text="Вся история" />
             </LinearLayout>
         </com.google.android.material.card.MaterialCardView>
 

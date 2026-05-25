@@ -1,7 +1,6 @@
 package david.dokholyan.aquatime;
 
 import android.content.Intent;
-import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.os.Handler;
 import androidx.appcompat.app.AppCompatActivity;
@@ -16,13 +15,15 @@ public class SplashActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_splash);
 
-        // В SplashActivity.java
         new Handler().postDelayed(() -> {
             FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
+
             if (user != null && user.isEmailVerified()) {
+
                 startActivity(new Intent(SplashActivity.this, MainActivity.class));
             } else {
-                startActivity(new Intent(SplashActivity.this, LoginActivity.class));
+
+                startActivity(new Intent(SplashActivity.this, RegisterActivity.class));
             }
             finish();
         }, 2000);
