@@ -38,7 +38,7 @@ public class TrainingReminderReceiver extends BroadcastReceiver {
             showNotification(context, 801, "AquaTime: Тренировка", message, null);
 
         } else if (ACTION_END.equals(action)) {
-            // Создаем интент для обработки нажатия кнопки "Да, обновить" прямо из уведомления
+
             Intent confirmIntent = new Intent(context, TrainingReminderReceiver.class);
             confirmIntent.setAction(ACTION_CONFIRM);
             confirmIntent.putExtra("distance", distance);
