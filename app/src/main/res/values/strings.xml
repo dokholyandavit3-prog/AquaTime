@@ -156,5 +156,15 @@
     <string name="word_training_2">тренировки</string>
     <string name="word_training_3">тренировок</string>
     <string name="rank_status_sec">с</string>
+<!-- Register/Login -->
+    <string name="hint_username">Имя пользователя</string>
+    <string name="hint_email">Электронная почта</string>
+    <string name="hint_password">Пароль</string>
+    <string name="hint_confirm_password">Подтвердите пароль</string>
+    <string name="btn_login_text">Войти</string>
+    <string name="btn_register_text">Регистрация</string>
+    <string name="btn_guest_text">Войти как гость для теста</string>
+    <string name="text_dont_have_account">Нет аккаунта? Зарегистрироваться</string>
+    <string name="text_already_have_account">Уже есть аккаунт? Войти</string>
 
 </resources>

@@ -19,24 +19,118 @@
             android:layout_marginBottom="16dp"
             android:fontFamily="sans-serif-black"
             android:text="@string/stats_title"
-            android:textColor="@color/aqua_deep"
+            android:textColor="?android:attr/textColorPrimary"
             android:textSize="22sp"
             android:textStyle="bold" />
 
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginBottom="4dp"
-            android:text="@string/chart_dist_label"
-            android:textSize="12sp" />
-
-        <david.dokholyan.aquatime.ui.ProgressChartView
-            android:id="@+id/chart_dist_weekly"
+        <com.google.android.material.card.MaterialCardView
             android:layout_width="match_parent"
-            android:layout_height="140dp"
+            android:layout_height="wrap_content"
             android:layout_marginBottom="20dp"
-            android:background="@drawable/chart_background"
-            android:elevation="4dp" />
+            app:cardCornerRadius="20dp"
+            app:cardElevation="0dp"
+            app:strokeColor="?android:attr/textColorSecondary"
+            app:strokeWidth="1dp">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:padding="16dp">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginBottom="8dp"
+                    android:text="@string/chart_dist_label"
+                    android:textColor="?android:attr/textColorSecondary"
+                    android:textSize="12sp" />
+
+                <david.dokholyan.aquatime.ui.ProgressChartView
+                    android:id="@+id/chart_dist_weekly"
+                    android:layout_width="match_parent"
+                    android:layout_height="140dp"
+                    android:padding="8dp" />
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="12dp"
+                    android:orientation="horizontal"
+                    android:weightSum="7">
+
+                    <TextView
+                        android:id="@+id/tv_day_mon"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:gravity="center"
+                        android:text="M\n(Пн)"
+                        android:textColor="?android:attr/textColorSecondary"
+                        android:textSize="10sp" />
+
+                    <TextView
+                        android:id="@+id/tv_day_tue"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:gravity="center"
+                        android:text="T\n(Вт)"
+                        android:textColor="?android:attr/textColorSecondary"
+                        android:textSize="10sp" />
+
+                    <TextView
+                        android:id="@+id/tv_day_wed"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:gravity="center"
+                        android:text="W\n(Ср)"
+                        android:textColor="?android:attr/textColorSecondary"
+                        android:textSize="10sp" />
+
+                    <TextView
+                        android:id="@+id/tv_day_thu"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:gravity="center"
+                        android:text="T\n(Чт)"
+                        android:textColor="?android:attr/textColorSecondary"
+                        android:textSize="10sp" />
+
+                    <TextView
+                        android:id="@+id/tv_day_fri"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:gravity="center"
+                        android:text="F\n(Пт)"
+                        android:textColor="?android:attr/textColorSecondary"
+                        android:textSize="10sp" />
+
+                    <TextView
+                        android:id="@+id/tv_day_sat"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:gravity="center"
+                        android:text="S\n(Сб)"
+                        android:textColor="?android:attr/textColorSecondary"
+                        android:textSize="10sp" />
+
+                    <TextView
+                        android:id="@+id/tv_day_sun"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:gravity="center"
+                        android:text="S\n(Вс)"
+                        android:textColor="?android:attr/textColorSecondary"
+                        android:textSize="10sp" />
+                </LinearLayout>
+            </LinearLayout>
+        </com.google.android.material.card.MaterialCardView>
 
         <LinearLayout
             android:layout_width="match_parent"
@@ -70,6 +164,7 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:text="@string/weekly_dist_label"
+                        android:textColor="?android:attr/textColorSecondary"
                         android:textSize="10sp" />
                 </LinearLayout>
             </androidx.cardview.widget.CardView>
@@ -101,6 +196,7 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:text="@string/total_trainings_title"
+                        android:textColor="?android:attr/textColorSecondary"
                         android:textSize="10sp" />
                 </LinearLayout>
             </androidx.cardview.widget.CardView>
@@ -123,9 +219,9 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="@string/archive_title"
-                    android:textColor="@color/aqua_deep"
-                    android:textStyle="bold"
-                    android:textSize="14sp" />
+                    android:textColor="?android:attr/textColorPrimary"
+                    android:textSize="14sp"
+                    android:textStyle="bold" />
 
                 <TextView
                     android:id="@+id/tv_archive_preview"
@@ -133,7 +229,7 @@
                     android:layout_height="wrap_content"
                     android:layout_marginTop="4dp"
                     android:text="Посмотреть историю тренировок по неделям"
-                    android:textColor="@android:color/darker_gray"
+                    android:textColor="?android:attr/textColorSecondary"
                     android:textSize="13sp" />
 
                 <Button
@@ -142,7 +238,8 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_gravity="end"
-                    android:text="Весь архив" />
+                    android:text="Весь архив"
+                    android:textColor="@color/aqua_primary" />
             </LinearLayout>
         </com.google.android.material.card.MaterialCardView>
 
@@ -162,7 +259,7 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="@string/history_title"
-                    android:textColor="@color/aqua_deep"
+                    android:textColor="?android:attr/textColorPrimary"
                     android:textStyle="bold" />
 
                 <TextView
@@ -171,7 +268,7 @@
                     android:layout_height="wrap_content"
                     android:layout_marginTop="4dp"
                     android:text="@string/no_records"
-                    android:textColor="@android:color/darker_gray" />
+                    android:textColor="?android:attr/textColorSecondary" />
 
                 <Button
                     android:id="@+id/btn_open_history"
@@ -179,7 +276,8 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_gravity="end"
-                    android:text="@string/btn_history" />
+                    android:text="@string/btn_history"
+                    android:textColor="@color/aqua_primary" />
             </LinearLayout>
         </com.google.android.material.card.MaterialCardView>
 
@@ -200,9 +298,9 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="История секундомера"
-                    android:textColor="@color/aqua_deep"
-                    android:textStyle="bold"
-                    android:textSize="14sp" />
+                    android:textColor="?android:attr/textColorPrimary"
+                    android:textSize="14sp"
+                    android:textStyle="bold" />
 
                 <TextView
                     android:id="@+id/tv_stopwatch_summary"
@@ -210,7 +308,7 @@
                     android:layout_height="wrap_content"
                     android:layout_marginTop="4dp"
                     android:text="Нет сохранённых замеров"
-                    android:textColor="@android:color/darker_gray"
+                    android:textColor="?android:attr/textColorSecondary"
                     android:textSize="13sp" />
 
                 <Button
@@ -219,7 +317,8 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_gravity="end"
-                    android:text="Вся история" />
+                    android:text="Вся история"
+                    android:textColor="@color/aqua_primary" />
             </LinearLayout>
         </com.google.android.material.card.MaterialCardView>
 
@@ -228,7 +327,7 @@
             android:layout_height="wrap_content"
             android:layout_marginBottom="8dp"
             android:text="@string/ranks_title"
-            android:textColor="@color/aqua_deep"
+            android:textColor="?android:attr/textColorPrimary"
             android:textStyle="bold" />
 
         <LinearLayout
@@ -242,7 +341,8 @@
             style="@style/Widget.MaterialComponents.Button.TextButton"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="@string/btn_show_all_styles" />
+            android:text="@string/btn_show_all_styles"
+            android:textColor="@color/aqua_primary" />
 
         <com.google.android.material.card.MaterialCardView
             android:layout_width="match_parent"
@@ -261,7 +361,7 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="@string/planner_title"
-                    android:textColor="@color/aqua_deep"
+                    android:textColor="?android:attr/textColorPrimary"
                     android:textSize="16sp"
                     android:textStyle="bold" />
 
@@ -272,6 +372,8 @@
                     android:background="@android:color/transparent"
                     android:hint="@string/hint_goal"
                     android:padding="8dp"
+                    android:textColor="?android:attr/textColorPrimary"
+                    android:textColorHint="?android:attr/textColorSecondary"
                     android:textSize="14sp" />
 
                 <com.google.android.material.button.MaterialButton
@@ -279,7 +381,9 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="8dp"
+                    android:backgroundTint="@color/button_primary"
                     android:text="@string/btn_add_goal"
+                    android:textColor="#FFFFFF"
                     app:cornerRadius="12dp" />
 
                 <TextView
@@ -287,7 +391,7 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="8dp"
-                    android:textColor="@android:color/darker_gray" />
+                    android:textColor="?android:attr/textColorSecondary" />
             </LinearLayout>
         </com.google.android.material.card.MaterialCardView>
 
@@ -296,8 +400,9 @@
             android:layout_width="match_parent"
             android:layout_height="60dp"
             android:layout_marginBottom="20dp"
+            android:backgroundTint="@color/button_primary"
             android:text="@string/btn_champions_advice"
-            app:backgroundTint="@color/aqua_deep"
+            android:textColor="#FFFFFF"
             app:cornerRadius="16dp" />
 
         <View

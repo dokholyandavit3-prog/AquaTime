@@ -6,7 +6,6 @@ import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.Button;
 import android.widget.ProgressBar;
 import android.widget.TextView;
 import androidx.annotation.NonNull;
@@ -30,9 +29,7 @@ public class DashboardFragment extends Fragment {
     private TextView tvLastDist, tvLastDate, tvWeeklyStatus;
     private TextView tvFavoritePool;
 
-
     private CardView cardMyPool, cardLastWorkout;
-
     private ProgressBar ringDist;
 
     @Nullable
@@ -66,12 +63,9 @@ public class DashboardFragment extends Fragment {
         tvLastDist = v.findViewById(R.id.tv_last_distance);
         tvLastDate = v.findViewById(R.id.tv_last_date);
 
-
         cardMyPool = v.findViewById(R.id.card_my_pool);
         cardLastWorkout = v.findViewById(R.id.card_last_workout);
 
-        Button btnToWorkout = v.findViewById(R.id.btn_to_workout);
-        Button btnToAnalytics = v.findViewById(R.id.btn_to_analytics);
         FloatingActionButton btnOpenMap = v.findViewById(R.id.btn_open_map);
 
         if (btnOpenMap != null) {
@@ -84,7 +78,6 @@ public class DashboardFragment extends Fragment {
             });
         }
 
-
         if (cardMyPool != null) {
             cardMyPool.setOnLongClickListener(view -> {
                 try {
@@ -96,41 +89,15 @@ public class DashboardFragment extends Fragment {
             });
         }
 
-
         if (cardLastWorkout != null) {
             cardLastWorkout.setOnLongClickListener(view -> {
                 if (getActivity() != null) {
                     BottomNavigationView nav = getActivity().findViewById(R.id.nav_view);
                     if (nav != null) {
-
                         nav.setSelectedItemId(R.id.analyticsFragment);
                     }
                 }
                 return true;
-            });
-        }
-
-
-
-        if (btnToWorkout != null) {
-            btnToWorkout.setOnClickListener(view -> {
-                if (getActivity() != null) {
-                    BottomNavigationView nav = getActivity().findViewById(R.id.nav_view);
-                    if (nav != null) {
-                        nav.setSelectedItemId(R.id.trainingFragment);
-                    }
-                }
-            });
-        }
-
-        if (btnToAnalytics != null) {
-            btnToAnalytics.setOnClickListener(view -> {
-                if (getActivity() != null) {
-                    BottomNavigationView nav = getActivity().findViewById(R.id.nav_view);
-                    if (nav != null) {
-                        nav.setSelectedItemId(R.id.analyticsFragment);
-                    }
-                }
             });
         }
     }
@@ -213,7 +180,6 @@ public class DashboardFragment extends Fragment {
 
         final int distGoal = 5000;
         final int finalWeeklyMeters = weeklyMeters;
-
 
         if (ringDist != null && distGoal > 0) {
             int progressValue = (finalWeeklyMeters * 100) / distGoal;

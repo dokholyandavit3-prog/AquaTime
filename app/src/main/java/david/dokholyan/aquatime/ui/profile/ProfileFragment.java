@@ -35,12 +35,11 @@ import david.dokholyan.aquatime.R;
 
 public class ProfileFragment extends Fragment {
 
-    private TextView tvName, tvEmail, tvDetails, tvLevel, tvMainRating, tvCountry;
+    private TextView tvName, tvEmail, tvDetails, tvLevel, tvMainRating, tvCountry, tvAchievements;
     private ImageView imgProfile;
     private SharedPreferences prefs;
     private ActivityResultLauncher<String> imagePicker;
     private static final String DEFAULT_EMOJI = "🏊‍♂️";
-
 
     private ProgressBar pbFreestyle, pbBreast, pbFly;
 
@@ -74,8 +73,8 @@ public class ProfileFragment extends Fragment {
         tvLevel = v.findViewById(R.id.tv_level);
         tvMainRating = v.findViewById(R.id.tv_main_rating);
         tvCountry = v.findViewById(R.id.tv_country);
+        tvAchievements = v.findViewById(R.id.tv_profile_achievements);
         imgProfile = v.findViewById(R.id.img_avatar);
-
 
         pbFreestyle = v.findViewById(R.id.pb_freestyle);
         pbBreast = v.findViewById(R.id.pb_breast);
@@ -97,14 +96,19 @@ public class ProfileFragment extends Fragment {
 
     private void loadProfileData() {
         FirebaseUser currentUser = FirebaseAuth.getInstance().getCurrentUser();
+        boolean en = isEnglish();
 
-        String firstName = prefs.getString("firstName", "David");
+        String firstName = prefs.getString("firstName", "Guest");
         String lastName = prefs.getString("lastName", "");
-        tvName.setText(firstName + " " + lastName);
+        tvName.setText((firstName + " " + lastName).trim());
 
         if (currentUser != null && currentUser.getEmail() != null && !currentUser.getEmail().isEmpty()) {
             tvEmail.setText(currentUser.getEmail());
+        } else {
+            tvEmail.setText(en ? "Guest Mode" : "Гостевой режим");
+        }
 
+        if (currentUser != null) {
             String userId = currentUser.getUid();
             FirebaseDatabase.getInstance().getReference("users").child(userId).get()
                     .addOnSuccessListener(snapshot -> {
@@ -127,39 +131,76 @@ public class ProfileFragment extends Fragment {
                             int updatedRating = calculateFifaRating();
                             tvMainRating.setText(String.valueOf(updatedRating));
                             updateLevelCardText(updatedRating);
-
                             calculateSwimSkills();
                         }
                     }).addOnFailureListener(Throwable::printStackTrace);
-
-        } else {
-            tvEmail.setText(isEnglish() ? "Guest Mode" : "Гостевой режим");
         }
 
-        String nation = prefs.getString("nation", "Армения 🇦🇲");
-        tvCountry.setText("📍 " + nation);
 
-        String styleLabel = isEnglish() ? "Style: " : "Стиль: ";
-        tvDetails.setText("📏 " + prefs.getString("height", "-") + " см | ⚖ " +
-                prefs.getString("weight", "-") + " кг\n🏊 " + styleLabel +
-                prefs.getString("style", isEnglish() ? "Not selected" : "Не выбран"));
+        String savedCountryIso = prefs.getString("nation_iso", "");
+        if (savedCountryIso.isEmpty()) {
+            tvCountry.setText("📍");
+        } else {
+            Locale displayLocale = en ? Locale.ENGLISH : new Locale("ru");
+            Locale countryLocale = new Locale("", savedCountryIso);
+            tvCountry.setText("📍 " + countryLocale.getDisplayCountry(displayLocale));
+        }
 
-        int fifaRating = calculateFifaRating();
-        tvMainRating.setText(String.valueOf(fifaRating));
-        updateLevelCardText(fifaRating);
 
+        String styleLabel = en ? "Style: " : "Стиль: ";
+        String cmUnit = en ? "cm" : "см";
+        String kgUnit = en ? "kg" : "кг";
+
+        String styleKey = prefs.getString("style_key", "freestyle");
+        String userStyle;
+
+        if (en) {
+            if (styleKey.equals("breaststroke")) userStyle = "Breaststroke";
+            else if (styleKey.equals("butterfly")) userStyle = "Butterfly";
+            else if (styleKey.equals("backstroke")) userStyle = "Backstroke";
+            else if (styleKey.equals("medley")) userStyle = "Individual Medley";
+            else userStyle = "Freestyle";
+        } else {
+            if (styleKey.equals("breaststroke")) userStyle = "Брасс";
+            else if (styleKey.equals("butterfly")) userStyle = "Баттерфляй";
+            else if (styleKey.equals("backstroke")) userStyle = "На спине";
+            else if (styleKey.equals("medley")) userStyle = "Комплекс";
+            else userStyle = "Вольный стиль";
+        }
+
+        tvDetails.setText("📏 " + prefs.getString("height", "-") + " " + cmUnit + " | ⚖ " +
+                prefs.getString("weight", "-") + " " + kgUnit + "\n🏊 " + styleLabel + userStyle);
+
+        // --- ДВУЯЗЫЧНЫЕ ДОСТИЖЕНИЯ ---
+        if (tvAchievements != null) {
+            String achievementsText;
+            if (en) {
+                achievementsText = prefs.getString("achievements_en", "");
+                if (achievementsText.isEmpty()) achievementsText = prefs.getString("achievements_ru", "");
+            } else {
+                achievementsText = prefs.getString("achievements_ru", "");
+                if (achievementsText.isEmpty()) achievementsText = prefs.getString("achievements_en", "");
+            }
+
+            if (achievementsText.isEmpty()) {
+                tvAchievements.setText(en ? "No achievements added yet" : "Достижения еще не добавлены");
+            } else {
+                tvAchievements.setText(achievementsText);
+            }
+        }
+
+        int cbRating = calculateFifaRating();
+        tvMainRating.setText(String.valueOf(cbRating));
+        updateLevelCardText(cbRating);
 
         calculateSwimSkills();
-
         renderProfileImage();
     }
-
 
     private void calculateSwimSkills() {
         if (pbFreestyle == null || pbBreast == null || pbFly == null) return;
 
         String data = prefs.getString("all_res", "");
-
 
         if (data.isEmpty()) {
             pbFreestyle.setProgress(10);
@@ -181,7 +222,6 @@ public class ProfileFragment extends Fragment {
                 int meters = Integer.parseInt(p[0].trim());
                 String workoutStyle = p[1].toLowerCase();
 
-
                 if (workoutStyle.contains("вольный") || workoutStyle.contains("кроль") || workoutStyle.contains("freestyle") || workoutStyle.contains("crawl")) {
                     crawlMeters += meters;
                 } else if (workoutStyle.contains("брасс") || workoutStyle.contains("breaststroke")) {
@@ -189,21 +229,19 @@ public class ProfileFragment extends Fragment {
                 } else if (workoutStyle.contains("баттерфляй") || workoutStyle.contains("butterfly") || workoutStyle.contains("дельфин")) {
                     flyMeters += meters;
                 } else {
-
                     crawlMeters += meters / 3;
                     breastMeters += meters / 3;
                     flyMeters += meters / 3;
                 }
-            } catch (Exception ignored) {}
+            } catch (Exception ignored) {
+            }
         }
-
 
         int maxSkillThreshold = 5000;
 
         int crawlPercent = Math.min(100, 10 + (crawlMeters * 90 / maxSkillThreshold));
         int breastPercent = Math.min(100, 10 + (breastMeters * 90 / maxSkillThreshold));
         int flyPercent = Math.min(100, 10 + (flyMeters * 90 / maxSkillThreshold));
-
 
         pbFreestyle.setProgress(crawlPercent);
         pbBreast.setProgress(breastPercent);
@@ -236,7 +274,8 @@ public class ProfileFragment extends Fragment {
                 String[] p = entry.split("\\|");
                 int meters = Integer.parseInt(p[0].trim());
                 totalMeters += meters;
-            } catch (Exception ignored) {}
+            } catch (Exception ignored) {
+            }
         }
 
         double experiencePoints = Math.min(15.0, totalTrainings * 0.5);
@@ -264,7 +303,8 @@ public class ProfileFragment extends Fragment {
                         rating -= penalty;
                     }
                 }
-            } catch (Exception ignored) {}
+            } catch (Exception ignored) {
+            }
         }
 
         if (rating > 85) {
@@ -281,7 +321,7 @@ public class ProfileFragment extends Fragment {
     private void showLogoutDialog() {
         boolean en = isEnglish();
         String title = en ? "Logout Account" : "Выход из аккаунта";
-        String msg = en ? "Are you sure you want to log out? All profile data will be cleared." : "Вы уверены, что хотите выйти? Все данные профиля будут удалены.";
+        String msg = en ? "Are you sure you want to log out? Your local workout data will be kept." : "Вы уверены, что хотите выйти? Ваши локальные данные тренировок будут сохранены.";
         String pos = en ? "Log Out" : "Выйти";
         String neg = en ? "Cancel" : "Отмена";
 
@@ -294,9 +334,6 @@ public class ProfileFragment extends Fragment {
     }
 
     private void performLogout() {
-        if (prefs != null) {
-            prefs.edit().clear().apply();
-        }
         try {
             FirebaseAuth.getInstance().signOut();
         } catch (Exception e) {
@@ -401,15 +438,15 @@ public class ProfileFragment extends Fragment {
                 "🥉", "🏅", "🎖️", "🐶", "🐱", "🐭", "🐹", "🐰", "🦊", "🐻",
                 "🐼", "🐨", "🐯", "🦁", "🐮", "🐷", "🐽", "🐸", "🐵", "🙈",
                 "🙉", "🙊", "🐒", "🐔", "🐧", "🐦", "🐤", "🐣", "🐥", "🦆",
-                "🦅", "🦉", "🦇", "🐺", "🐗", "🐴", "🦄", "🐝", "🪱", "🐛",
+                "🦅", "🦉", "🦇", "🐺", "🐗", "🐴", "🦄", "🐝", "🐛",
                 "🦋", "🐌", "🐞", "🐜", "🪰", "🪲", "🪳", "🦟", "👑", "🕷️",
-                "🕸️", "🦂", "🐢", "🐍", "🦎", "🦖", "🦕", "🐙", "🦑", "🪼",
+                "🕸️", "🦂", "🐍", "🦎", "🦖", "🦕", "🐙", "🦑", "🪼",
                 "🦐", "🦞", "🦀", "🐡", "🐠", "🐟", "🐬", "🐳", "🐋", "🦈",
                 "🐊", "🐅", "🐆", "🦓", "🦍", "🦧", "🐘", "🦛", "🦏", "🐪",
                 "🐫", "🦒", "🦘", "🦬", "🐃", "🐂", "🐄", "🐎", "🐖", "🐏",
                 "🐑", "🦙", "🐐", "🦌", "🐕", "🐩", "🦮", "🐕‍🦺", "🐈", "🐈‍⬛",
                 "🪶", "🐓", "🦃", "🦤", "🦚", "🦜", "🪽", "🐇", "🦝", "🦨",
-                "🦡", "🦫", "🦦", "🦥", "🐁", "🐀", "🐿️", "🦔"
+                "🦡", "🦫", "🦦", "🦥", "🐁", "🐿️", "🦔"
         };
 
         GridView gridView = new GridView(requireContext());
@@ -438,7 +475,7 @@ public class ProfileFragment extends Fragment {
         gridView.setAdapter(adapter);
 
         AlertDialog dialog = new AlertDialog.Builder(requireContext())
-                .setTitle(isEnglish() ? "Select Emoji" : "Выберите стиль")
+                .setTitle(isEnglish() ? "Select Emoji" : "Выберите эмодзи")
                 .setView(gridView)
                 .setNegativeButton(isEnglish() ? "Cancel" : "Отмена", null)
                 .create();
@@ -473,6 +510,6 @@ public class ProfileFragment extends Fragment {
     }
 
     private boolean isEnglish() {
-        return Locale.getDefault().getLanguage().equalsIgnoreCase("en");
+        return prefs.getString("app_lang", "ru").equalsIgnoreCase("en");
     }
 }

@@ -3,11 +3,11 @@
         <item name="colorPrimary">@color/aqua_primary</item>
         <item name="colorOnPrimary">@android:color/white</item>
 
-
         <item name="android:windowBackground">@color/background_dark</item>
         <item name="android:colorBackground">@color/background_dark</item>
 
-
         <item name="android:textColorPrimary">@android:color/white</item>
+        <item name="android:textColorSecondary">@android:color/white</item>
+        <item name="android:textColorHint">@android:color/white</item>
     </style>
 </resources>

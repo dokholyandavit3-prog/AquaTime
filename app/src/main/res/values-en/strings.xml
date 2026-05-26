@@ -1,0 +1,171 @@
+<resources>
+    <string name="app_name">AquaTime</string>
+
+    <!-- Navigation -->
+    <string name="menu_home">Home</string>
+    <string name="menu_training">Training</string>
+    <string name="menu_analytics">Analytics</string>
+    <string name="menu_profile">Profile</string>
+
+    <!-- Dashboard -->
+    <string name="streak_title">STREAK MODE</string>
+    <string name="streak_record">Best: %1$d days</string>
+    <string name="last_workout_title">LAST WORKOUT</string>
+    <string name="weekly_goals_title">WEEKLY GOALS</string>
+    <string name="coach_advice_title">COACH ADVICE</string>
+    <string name="btn_to_workout">To Workout</string>
+    <string name="btn_to_analytics">To Analytics</string>
+    <string name="streak_days_count">%1$d days in a row</string>
+    <string name="weekly_goals_progress">%1$d of %2$d m completed</string>
+    <string name="default_coach_advice">For better gliding, keep your palm flat but not tense.</string>
+    <string name="dashboard_my_pool">MY POOL</string>
+    <string name="dashboard_no_pool_selected">No pool selected 🏊‍♂️</string>
+    <string name="meters_format">%d m</string>
+    <string name="greeting_morning">Good morning! 🌅</string>
+    <string name="greeting_afternoon">Good afternoon! 🌊</string>
+    <string name="greeting_evening">Good evening! 🌙</string>
+
+    <!-- Training -->
+    <string name="training_page_title">TRAINING</string>
+    <string name="tip_of_day">💡 Tip of the Day</string>
+    <string name="default_training_tip">Tip: Don\'t forget to warm up before jumping in!</string>
+    <string name="btn_ai_plan">🤖 TODAY\'S PLAN</string>
+    <string name="btn_save_result">💾 SAVE RESULT</string>
+    <string name="btn_start">START</string>
+    <string name="btn_pause">PAUSE</string>
+    <string name="btn_reset">RESET</string>
+    <string name="training_plan_title">Training Plan</string>
+    <string name="ai_plan_hint">Your AI-generated plan will appear here</string>
+    <string name="manual_plan_title">Manual Entry</string>
+    <string name="hint_manual_dist">Distance (m)</string>
+    <string name="btn_add_to_plan">Add to Plan</string>
+    <string name="last_swims_title">Recent Swims</string>
+    <string name="total_swims_count">Total swims: %1$d</string>
+    <string name="btn_delete_measure">Delete record</string>
+    <string name="btn_mode_ai_text">Ready-made</string>
+    <string name="btn_mode_constructor_text">Constructor</string>
+    <string name="title_mode_ai">Ready-made Workouts</string>
+    <string name="title_mode_constructor">Custom Constructor</string>
+    <string name="btn_ai_change_reset">Change / Reset Plan 🔄</string>
+    <string name="btn_ai_select_plan">Select a ready plan</string>
+    <string name="btn_constructor_assemble">Assemble whole workout 📝</string>
+    <string name="dialog_mgmt_title">Workout Management</string>
+    <string name="toast_plan_cleared">Plan successfully cleared!</string>
+    <string name="select_mode_label">SELECT MODE</string>
+    <string name="block_warmup_title">🏁 WARM-UP</string>
+    <string name="block_main_title">🏊‍♂️ MAIN SET</string>
+    <string name="block_cooldown_title">🛑 COOL-DOWN</string>
+    <string name="btn_schedule">Schedule 📅</string>
+    <string name="btn_complete_now">Complete Now! ✅</string>
+
+    <string name="nav_home">Home</string>
+    <string name="nav_training">Training</string>
+    <string name="nav_analytics">Analytics</string>
+    <string name="nav_profile">Profile</string>
+
+
+    <!-- Analytics Screen -->
+    <string name="stats_title">Statistics</string>
+    <string name="chart_dist_label">Weekly Distance (meters)</string>
+    <string name="chart_time_label">Time in Water (minutes)</string>
+    <string name="weekly_dist_label">Weekly Distance</string>
+    <string name="weekly_time_label">Weekly Time</string>
+    <string name="history_title">History</string>
+    <string name="no_records">No records yet</string>
+    <string name="btn_history">VIEW HISTORY</string>
+    <string name="ranks_title">Style Ranks</string>
+    <string name="btn_show_all_styles">SHOW ALL STYLES</string>
+    <string name="planner_title">Planner</string>
+    <string name="hint_goal">Enter training goal…</string>
+    <string name="btn_add_goal">ADD GOAL</string>
+    <string name="btn_champions_advice">CHAMPIONS\' ADVICE 🏆</string>
+    <string name="total_trainings_label">Total trainings</string>
+    <string name="archive_title">Weekly Archive</string>
+    <string name="empty_archive_msg">No history for previous weeks</string>
+    <string name="training_count_form">%1$d %2$s</string>
+    <string name="week_record_format">Week %1$d (%2$d) | %3$d m | %4$s</string>
+    <string name="last_workout_prefix">Last: </string>
+    <string name="goal_added_msg">Goal added</string>
+    <string name="btn_hide">Hide</string>
+    <string name="btn_details">More info</string>
+    <string name="planner_empty">No goals planned</string>
+    <string name="total_trainings_title">Total Workouts</string>
+
+    <!-- Settings -->
+    <string name="settings_title">Settings</string>
+    <string name="change_theme">🌓 Change Theme</string>
+    <string name="change_lang">🌐 Change Language</string>
+    <string name="btn_back">Back</string>
+
+    <!-- History & Champions -->
+    <string name="history_full_title">📖 Full History</string>
+    <string name="current_goals_title">🎯 Current Goals</string>
+    <string name="completed_workouts_title">✅ Completed Workouts</string>
+    <string name="champions_title">🏆 Swimming Legends</string>
+
+    <!-- Rank Card -->
+    <string name="rank_style_default">Style</string>
+    <string name="rank_best_label">Best: %1$s</string>
+    <string name="btn_more">More Info</string>
+
+    <!-- Champion Item -->
+    <string name="champion_medals_default">🏅 Olympic Medals</string>
+
+    <!-- Profile Screen -->
+    <string name="profile_level_pro">Level: Pro 🟣</string>
+    <string name="profile_location">📍 Armenia 🇦🇲</string>
+    <string name="profile_rating_label">YOUR TOTAL RATING</string>
+    <string name="profile_params_title">📊 Parameters</string>
+    <string name="profile_params_summary">Height: %1$d cm | Weight: %2$d kg\nStyle: %3$s</string>
+    <string name="profile_skills_title">🏊 Style Skills</string>
+    <string name="style_freestyle">Freestyle</string>
+    <string name="style_breaststroke">Breaststroke</string>
+    <string name="style_butterfly">Butterfly</string>
+    <string name="btn_edit">✏️ Edit Profile</string>
+    <string name="btn_settings">⚙️ Settings</string>
+    <string name="btn_logout">Logout</string>
+
+    <!-- Edit Profile -->
+    <string name="edit_profile_title">Edit Profile</string>
+    <string name="hint_first_name">First Name</string>
+    <string name="hint_last_name">Last Name</string>
+    <string name="hint_height">Height (cm)</string>
+    <string name="hint_weight">Weight (kg)</string>
+    <string name="hint_achievements">Main Achievements</string>
+    <string name="btn_save">💾 Save</string>
+
+    <string-array name="styles_array">
+        <item>Freestyle 50m</item>
+        <item>Breaststroke 50m</item>
+        <item>Backstroke 50m</item>
+        <item>Butterfly 50m</item>
+        <item>Medley 100m</item>
+    </string-array>
+    <string-array name="ranks_array">
+        <item>III-J</item>
+        <item>II-J</item>
+        <item>I-J</item>
+        <item>III</item>
+        <item>II</item>
+        <item>I</item>
+        <item>Candidate MS</item>
+        <item>MS</item>
+        <item>MSIC</item>
+    </string-array>
+    <string name="word_training_1">workout</string>
+    <string name="word_training_2">workouts</string>
+    <string name="word_training_3">workouts</string>
+    <string name="rank_status_sec">s</string>
+
+    <!-- Register/Login -->
+    <string name="hint_username">Username</string>
+    <string name="hint_email">Email</string>
+    <string name="hint_password">Password</string>
+    <string name="hint_confirm_password">Confirm Password</string>
+    <string name="btn_login_text">Login</string>
+    <string name="btn_register_text">Register</string>
+    <string name="btn_guest_text">Login as guest for Test</string>
+    <string name="text_dont_have_account">Don\'t have an account? Register</string>
+    <string name="text_already_have_account">Already have an account? Login</string>
+
+</resources>

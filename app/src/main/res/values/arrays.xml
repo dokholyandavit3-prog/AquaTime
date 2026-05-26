@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string-array name="swimming_styles_array">
+        <item>Кроль 50м</item>
+        <item>Брасс 50м</item>
+        <item>Спина 50м</item>
+        <item>Батт 50м</item>
+        <item>Кроль 100м</item>
+        <item>Брасс 100м</item>
+        <item>Спина 100м</item>
+        <item>Батт 100м</item>
+        <item>Комплекс 100м</item>
+    </string-array>
+</resources>

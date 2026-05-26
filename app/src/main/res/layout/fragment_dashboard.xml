@@ -26,7 +26,7 @@
                 android:layout_centerVertical="true"
                 android:layout_toStartOf="@id/btn_open_map"
                 android:layout_marginEnd="16dp"
-                android:textColor="#102A43"
+                android:textColor="?android:attr/textColorPrimary"
                 android:textSize="26sp"
                 android:textStyle="bold"
                 tools:text="Доброе утро! 🌅" />
@@ -38,7 +38,7 @@
                 android:layout_alignParentEnd="true"
                 android:layout_centerVertical="true"
                 android:contentDescription="Open Pools Map"
-                app:backgroundTint="#1E88E5"
+                app:backgroundTint="@color/aqua_primary"
                 app:fabSize="mini"
                 app:srcCompat="@android:drawable/ic_dialog_map"
                 app:tint="#FFFFFF"
@@ -57,7 +57,6 @@
                 android:layout_height="wrap_content"
                 android:orientation="horizontal"
                 android:padding="24dp"
-                android:background="#FFF3E0"
                 android:gravity="center_vertical">
 
                 <TextView
@@ -76,7 +75,7 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:text="@string/streak_title"
-                        android:textColor="#E65100"
+                        android:textColor="?android:attr/textColorSecondary"
                         android:textSize="12sp"
                         android:textStyle="bold"
                         android:letterSpacing="0.1"/>
@@ -85,7 +84,7 @@
                         android:id="@+id/tv_streak_count_text"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:textColor="#BF360C"
+                        android:textColor="?android:attr/textColorPrimary"
                         android:textSize="20sp"
                         android:textStyle="bold"
                         tools:text="3 дня подряд" />
@@ -96,7 +95,7 @@
                         android:layout_height="wrap_content"
                         android:text="@string/streak_record"
                         android:textSize="14sp"
-                        android:textColor="#757575"
+                        android:textColor="?android:attr/textColorSecondary"
                         tools:text="Рекорд: 5 дней" />
                 </LinearLayout>
             </LinearLayout>
@@ -118,7 +117,6 @@
                 android:layout_height="wrap_content"
                 android:orientation="horizontal"
                 android:padding="24dp"
-                android:background="#E0F7FA"
                 android:gravity="center_vertical">
 
                 <TextView
@@ -137,7 +135,7 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:text="@string/dashboard_my_pool"
-                        android:textColor="#006064"
+                        android:textColor="?android:attr/textColorSecondary"
                         android:textSize="12sp"
                         android:textStyle="bold"
                         android:letterSpacing="0.1"/>
@@ -147,7 +145,7 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:text="@string/dashboard_no_pool_selected"
-                        android:textColor="#00838F"
+                        android:textColor="?android:attr/textColorPrimary"
                         android:textSize="20sp"
                         android:textStyle="bold"
                         android:layout_marginTop="2dp"
@@ -181,7 +179,7 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:text="@string/last_workout_title"
-                        android:textColor="#546E7A"
+                        android:textColor="?android:attr/textColorSecondary"
                         android:textStyle="bold"
                         android:textSize="12sp"
                         android:letterSpacing="0.1"/>
@@ -191,7 +189,7 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_alignParentEnd="true"
-                        android:textColor="#90A4AE"
+                        android:textColor="?android:attr/textColorSecondary"
                         android:textSize="12sp"
                         tools:text="24.05.2026" />
                 </RelativeLayout>
@@ -200,7 +198,7 @@
                     android:id="@+id/tv_last_distance"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:textColor="#102A43"
+                    android:textColor="?android:attr/textColorPrimary"
                     android:textSize="36sp"
                     android:layout_marginTop="8dp"
                     android:textStyle="bold"
@@ -245,7 +243,7 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:text="@string/weekly_goals_title"
-                        android:textColor="#102A43"
+                        android:textColor="?android:attr/textColorPrimary"
                         android:textSize="18sp"
                         android:textStyle="bold" />
 
@@ -253,7 +251,7 @@
                         android:id="@+id/tv_weekly_status_text"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:textColor="#546E7A"
+                        android:textColor="?android:attr/textColorSecondary"
                         tools:text="3000 из 5000 м пройдено" />
                 </LinearLayout>
             </LinearLayout>
@@ -269,8 +267,7 @@
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:padding="24dp"
-                android:background="#E3F2FD">
+                android:padding="24dp">
 
                 <TextView
                     android:layout_width="wrap_content"
@@ -289,7 +286,7 @@
                         android:layout_height="wrap_content"
                         android:text="@string/coach_advice_title"
                         android:textStyle="bold"
-                        android:textColor="#1565C0"
+                        android:textColor="?android:attr/textColorPrimary"
                         android:textSize="12sp"
                         android:letterSpacing="0.1"/>
 
@@ -297,44 +294,15 @@
                         android:id="@+id/tv_daily_tip_text"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:textColor="#1E88E5"
+                        android:textColor="?android:attr/textColorSecondary"
                         android:layout_marginTop="4dp"
                         tools:text="Не забывайте про фазу скольжения после каждого гребка." />
                 </LinearLayout>
             </LinearLayout>
         </androidx.cardview.widget.CardView>
 
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="horizontal"
-            android:layout_marginBottom="10dp">
-
-            <Button
-                android:id="@+id/btn_to_workout"
-                android:layout_width="0dp"
-                android:layout_height="55dp"
-                android:layout_weight="1"
-                android:layout_marginEnd="8dp"
-                android:backgroundTint="#1E88E5"
-                android:text="@string/btn_to_workout"
-                android:textAllCaps="false"
-                android:textColor="#FFFFFF" />
-
-            <Button
-                android:id="@+id/btn_to_analytics"
-                android:layout_width="0dp"
-                android:layout_height="55dp"
-                android:layout_weight="1"
-                android:layout_marginStart="8dp"
-                android:backgroundTint="#E3F2FD"
-                android:text="@string/btn_to_analytics"
-                android:textAllCaps="false"
-                android:textColor="#1E88E5" />
-        </LinearLayout>
-
         <View
             android:layout_width="match_parent"
-            android:layout_height="50dp" />
+            android:layout_height="30dp" />
     </LinearLayout>
 </androidx.core.widget.NestedScrollView>

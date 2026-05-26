@@ -16,6 +16,7 @@ import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
 import androidx.navigation.Navigation;
 
@@ -35,6 +36,9 @@ public class AnalyticsFragment extends Fragment {
     private LinearLayout ranksContainer;
     private ProgressChartView chartDist;
     private boolean isExpanded = false;
+
+    // Ссылки на текстовые метки дней недели для динамической локализации
+    private TextView tvDayMon, tvDayTue, tvDayWed, tvDayThu, tvDayFri, tvDaySat, tvDaySun;
 
     private final String[] styles = {"Вольный стиль 50м", "Брасс 50м", "На спине 50м", "Баттерфляй 50м", "Комплекс 100м"};
     private final double[][] norms = {
@@ -57,8 +61,8 @@ public class AnalyticsFragment extends Fragment {
         showRanks(0, 3);
         fetchFreshDataFromFirebase();
 
-
         updateStaticButtonsLocalization(v);
+        updateChartDaysLocalization();
 
         v.findViewById(R.id.btn_toggle_ranks).setOnClickListener(view -> toggleRanks((Button) view));
         v.findViewById(R.id.btn_add_goal).setOnClickListener(view -> addGoal());
@@ -90,6 +94,15 @@ public class AnalyticsFragment extends Fragment {
         tvArchivePreview = v.findViewById(R.id.tv_archive_preview);
         tvStopwatchSummary = v.findViewById(R.id.tv_stopwatch_summary);
 
+
+        tvDayMon = v.findViewById(R.id.tv_day_mon);
+        tvDayTue = v.findViewById(R.id.tv_day_tue);
+        tvDayWed = v.findViewById(R.id.tv_day_wed);
+        tvDayThu = v.findViewById(R.id.tv_day_thu);
+        tvDayFri = v.findViewById(R.id.tv_day_fri);
+        tvDaySat = v.findViewById(R.id.tv_day_sat);
+        tvDaySun = v.findViewById(R.id.tv_day_sun);
+
         TextView tvStopwatchTitle = v.findViewById(R.id.tv_stopwatch_history_title);
         if (tvStopwatchTitle != null) {
             tvStopwatchTitle.setText(isEnglish() ? "Stopwatch History" : "История секундомера");
@@ -104,7 +117,6 @@ public class AnalyticsFragment extends Fragment {
         return Locale.getDefault().getLanguage().equalsIgnoreCase("en");
     }
 
-
     private void updateStaticButtonsLocalization(View v) {
         TextView btnArchive = v.findViewById(R.id.btn_open_weeks_archive);
         TextView btnHistory = v.findViewById(R.id.btn_open_history);
@@ -116,6 +128,17 @@ public class AnalyticsFragment extends Fragment {
         if (btnStopwatch != null) btnStopwatch.setText(en ? "VIEW HISTORY" : "ВСЯ ИСТОРИЯ");
     }
 
+    // Метод динамического изменения формата подписей дней недели под графиком
+    private void updateChartDaysLocalization() {
+        boolean en = isEnglish();
+        if (tvDayMon != null) tvDayMon.setText(en ? "M\n(Mo)" : "M\n(Пн)");
+        if (tvDayTue != null) tvDayTue.setText(en ? "T\n(Tu)" : "T\n(Вт)");
+        if (tvDayWed != null) tvDayWed.setText(en ? "W\n(We)" : "W\n(Ср)");
+        if (tvDayThu != null) tvDayThu.setText(en ? "T\n(Th)" : "T\n(Чт)");
+        if (tvDayFri != null) tvDayFri.setText(en ? "F\n(Fr)" : "F\n(Пт)");
+        if (tvDaySat != null) tvDaySat.setText(en ? "S\n(Sa)" : "S\n(Сб)");
+        if (tvDaySun != null) tvDaySun.setText(en ? "S\n(Su)" : "S\n(Вс)");
+    }
 
     private void updateStopwatchPreview() {
         if (tvStopwatchSummary == null) return;
@@ -168,6 +191,7 @@ public class AnalyticsFragment extends Fragment {
                             if (isAdded() && getContext() != null) {
                                 calculateWeeklyAndArchiveStats();
                                 updateStopwatchPreview();
+                                updateChartDaysLocalization();
                                 if (tvPlanner != null) {
                                     tvPlanner.setText(prefs.getString("planner", getString(R.string.planner_empty)));
                                 }
@@ -304,13 +328,20 @@ public class AnalyticsFragment extends Fragment {
         container.removeAllViews();
         String[] localizedRanks = getResources().getStringArray(R.array.ranks_array);
 
+        TypedValue typedValue = new TypedValue();
+        getContext().getTheme().resolveAttribute(android.R.attr.textColorSecondary, typedValue, true);
+        int secondaryTextColor = ContextCompat.getColor(getContext(), typedValue.resourceId != 0 ? typedValue.resourceId : android.R.color.darker_gray);
+
+        int activeAquaColor = ContextCompat.getColor(getContext(), R.color.aqua_primary);
+
         for (int i = 0; i < normArr.length; i++) {
             TextView tv = new TextView(getContext());
             boolean isOk = (userSec > 0 && userSec <= normArr[i]);
             String status = isOk ? " ✅" : "";
             tv.setText(localizedRanks[i] + ": " + normArr[i] + getString(R.string.rank_status_sec) + status);
             tv.setPadding(0, 4, 0, 4);
-            tv.setTextColor(isOk ? Color.parseColor("#1976D2") : Color.GRAY);
+
+            tv.setTextColor(isOk ? activeAquaColor : secondaryTextColor);
             container.addView(tv);
         }
     }

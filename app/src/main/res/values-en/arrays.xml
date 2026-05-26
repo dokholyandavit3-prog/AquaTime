@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string-array name="swimming_styles_array">
+        <item>Freestyle 50m</item>
+        <item>Breaststroke 50m</item>
+        <item>Backstroke 50m</item>
+        <item>Butterfly 50m</item>
+        <item>Freestyle 100m</item>
+        <item>Breaststroke 100m</item>
+        <item>Backstroke 100m</item>
+        <item>Butterfly 100m</item>
+        <item>Medley 100m</item>
+    </string-array>
+</resources>

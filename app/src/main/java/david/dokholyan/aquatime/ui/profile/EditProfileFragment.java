@@ -13,15 +13,21 @@ import androidx.fragment.app.Fragment;
 import androidx.navigation.Navigation;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.Locale;
 import david.dokholyan.aquatime.R;
 
 public class EditProfileFragment extends Fragment {
 
     private EditText etFirst, etLast, etHeight, etWeight, etAchievements;
-    private Spinner spinStyle, spinNation;
+    private AutoCompleteTextView spinStyle, spinNation;
     private SharedPreferences prefs;
     private boolean isEnglish;
+
+    private final String[] styleKeys = {"freestyle", "breaststroke", "butterfly", "backstroke", "medley"};
+    private final ArrayList<String> countryIsoKeys = new ArrayList<>();
+    private final ArrayList<String> countryDisplayNames = new ArrayList<>();
+    private String[] styleDisplayNames;
 
     @Nullable
     @Override
@@ -29,13 +35,13 @@ public class EditProfileFragment extends Fragment {
         View view = inflater.inflate(R.layout.fragment_edit_profile, container, false);
         prefs = requireActivity().getSharedPreferences("AquaTime", Context.MODE_PRIVATE);
 
-        isEnglish = getString(R.string.nav_home).equals("Home");
+        isEnglish = prefs.getString("app_lang", "ru").equalsIgnoreCase("en");
 
         initFields(view);
         setupSpinners();
         loadCurrentData();
 
-        view.findViewById(R.id.btn_save).setOnClickListener(v -> saveAndExit(v));
+        view.findViewById(R.id.btn_save).setOnClickListener(this::saveAndExit);
         view.findViewById(R.id.btn_back).setOnClickListener(v -> Navigation.findNavController(v).popBackStack());
 
         return view;
@@ -52,23 +58,49 @@ public class EditProfileFragment extends Fragment {
     }
 
     private void setupSpinners() {
-        String[] styles = isEnglish ?
+        if (getContext() == null) return;
+
+        // 1. Настройка стилей плавания
+        styleDisplayNames = isEnglish ?
                 new String[]{"Freestyle", "Breaststroke", "Butterfly", "Backstroke", "Individual Medley"} :
-                new String[]{"Кроль", "Брасс", "Баттерфляй", "Спина", "Комплекс"};
+                new String[]{"Вольный стиль", "Брасс", "Баттерфляй", "На спине", "Комплекс"};
 
-        if (getContext() != null) {
-            spinStyle.setAdapter(new ArrayAdapter<>(getContext(), android.R.layout.simple_spinner_dropdown_item, styles));
+        ArrayAdapter<String> styleAdapter = new ArrayAdapter<>(getContext(), android.R.layout.simple_dropdown_item_1line, styleDisplayNames);
+        spinStyle.setAdapter(styleAdapter);
 
-            ArrayList<String> countries = new ArrayList<>();
-            Locale targetLocale = isEnglish ? Locale.ENGLISH : new Locale("ru");
 
-            for (String code : Locale.getISOCountries()) {
-                Locale l = new Locale("", code);
-                countries.add(l.getDisplayCountry(targetLocale));
+        ArrayList<CountryItem> countryList = new ArrayList<>();
+        HashSet<String> addedCodes = new HashSet<>();
+        Locale displayLocale = isEnglish ? Locale.ENGLISH : new Locale("ru");
+
+
+        for (String code : Locale.getISOCountries()) {
+            if (!addedCodes.contains(code)) {
+                addedCodes.add(code);
+
+                Locale locale = new Locale("", code);
+                String name = locale.getDisplayCountry(displayLocale);
+
+
+                if (!name.isEmpty() && !name.equals(code)) {
+                    countryList.add(new CountryItem(code, name));
+                }
             }
-            Collections.sort(countries);
-            spinNation.setAdapter(new ArrayAdapter<>(getContext(), android.R.layout.simple_spinner_dropdown_item, countries));
         }
+
+
+        Collections.sort(countryList, (c1, c2) -> c1.displayName.compareToIgnoreCase(c2.displayName));
+
+        countryDisplayNames.clear();
+        countryIsoKeys.clear();
+
+        for (CountryItem item : countryList) {
+            countryIsoKeys.add(item.isoCode);
+            countryDisplayNames.add(item.displayName);
+        }
+
+        ArrayAdapter<String> nationAdapter = new ArrayAdapter<>(getContext(), android.R.layout.simple_dropdown_item_1line, countryDisplayNames);
+        spinNation.setAdapter(nationAdapter);
     }
 
     private void loadCurrentData() {
@@ -76,37 +108,83 @@ public class EditProfileFragment extends Fragment {
         etLast.setText(prefs.getString("lastName", ""));
         etHeight.setText(prefs.getString("height", ""));
         etWeight.setText(prefs.getString("weight", ""));
-        etAchievements.setText(prefs.getString("achievements", ""));
 
-        String savedStyle = prefs.getString("style", "");
-        String savedNation = prefs.getString("nation", "");
-
-        if (!savedStyle.isEmpty() && spinStyle.getAdapter() != null) {
-            ArrayAdapter<String> adapter = (ArrayAdapter<String>) spinStyle.getAdapter();
-            int pos = adapter.getPosition(savedStyle);
-            if (pos >= 0) spinStyle.setSelection(pos);
+        if (isEnglish) {
+            etAchievements.setText(prefs.getString("achievements_en", ""));
+        } else {
+            etAchievements.setText(prefs.getString("achievements_ru", ""));
         }
 
-        if (!savedNation.isEmpty() && spinNation.getAdapter() != null) {
-            ArrayAdapter<String> adapter = (ArrayAdapter<String>) spinNation.getAdapter();
-            int pos = adapter.getPosition(savedNation);
-            if (pos >= 0) spinNation.setSelection(pos);
+        String savedStyleKey = prefs.getString("style_key", "freestyle");
+        String savedCountryIso = prefs.getString("nation_iso", "");
+
+
+        for (int i = 0; i < styleKeys.length; i++) {
+            if (styleKeys[i].equals(savedStyleKey)) {
+                spinStyle.setText(styleDisplayNames[i], false);
+                break;
+            }
+        }
+
+
+        if (!savedCountryIso.isEmpty()) {
+            int countryPosition = countryIsoKeys.indexOf(savedCountryIso);
+            if (countryPosition >= 0) {
+                spinNation.setText(countryDisplayNames.get(countryPosition), false);
+            }
         }
     }
 
     private void saveAndExit(View v) {
-        prefs.edit()
+        String styleDisplay = spinStyle.getText().toString();
+        String countryDisplay = spinNation.getText().toString();
+
+
+        int selectedStylePos = -1;
+        for (int i = 0; i < styleDisplayNames.length; i++) {
+            if (styleDisplayNames[i].equals(styleDisplay)) {
+                selectedStylePos = i;
+                break;
+            }
+        }
+
+
+        int selectedCountryPos = countryDisplayNames.indexOf(countryDisplay);
+
+        String styleKeyToSave = (selectedStylePos >= 0) ? styleKeys[selectedStylePos] : "freestyle";
+        String countryIsoToSave = (selectedCountryPos >= 0) ? countryIsoKeys.get(selectedCountryPos) : "";
+
+        SharedPreferences.Editor editor = prefs.edit()
                 .putString("firstName", etFirst.getText().toString())
                 .putString("lastName", etLast.getText().toString())
                 .putString("height", etHeight.getText().toString())
                 .putString("weight", etWeight.getText().toString())
-                .putString("style", spinStyle.getSelectedItem().toString())
-                .putString("nation", spinNation.getSelectedItem().toString())
-                .putString("achievements", etAchievements.getText().toString())
-                .apply();
+                .putString("style_key", styleKeyToSave)
+                .putString("nation_iso", countryIsoToSave)
+                .putString("style", styleDisplay)
+                .putString("nation", countryDisplay);
+
+        String enteredAchievements = etAchievements.getText().toString();
+        if (isEnglish) {
+            editor.putString("achievements_en", enteredAchievements);
+        } else {
+            editor.putString("achievements_ru", enteredAchievements);
+        }
+
+        editor.apply();
 
         String message = isEnglish ? "Profile updated" : "Профиль обновлен";
         Toast.makeText(getContext(), message, Toast.LENGTH_SHORT).show();
         Navigation.findNavController(v).popBackStack();
+    }
+
+    private static class CountryItem {
+        String isoCode;
+        String displayName;
+
+        CountryItem(String isoCode, String displayName) {
+            this.isoCode = isoCode;
+            this.displayName = displayName;
+        }
     }
 }
