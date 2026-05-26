@@ -64,12 +64,10 @@ public class ChampionsFragment extends Fragment {
     }
 
     private Champion[] getChampionsList() {
-        // Проверяем язык системы на лету
         String lang = Locale.getDefault().getLanguage();
         boolean isEn = lang.equalsIgnoreCase("en");
 
         if (isEn) {
-            // Английская версия данных
             return new Champion[]{
                     new Champion(
                             "Michael Phelps",
@@ -122,7 +120,6 @@ public class ChampionsFragment extends Fragment {
                     )
             };
         } else {
-            // Русская версия данных (твоя оригинальная)
             return new Champion[]{
                     new Champion(
                             "Майкл Фелпс",

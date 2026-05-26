@@ -7,6 +7,8 @@ import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
 import android.net.Uri;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Looper;
 import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -23,13 +25,22 @@ import androidx.navigation.Navigation;
 
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
-import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.firestore.FirebaseFirestore;
+import com.google.firebase.firestore.SetOptions;
+import com.google.firebase.storage.FirebaseStorage;
+import com.google.firebase.storage.StorageReference;
 
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.net.URL;
+import java.util.HashMap;
 import java.util.Locale;
+import java.util.Map;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 import david.dokholyan.aquatime.R;
 
@@ -37,31 +48,51 @@ public class ProfileFragment extends Fragment {
 
     private TextView tvName, tvEmail, tvDetails, tvLevel, tvMainRating, tvCountry, tvAchievements;
     private ImageView imgProfile;
-    private SharedPreferences prefs;
+    private ProgressBar pbAvatarLoading;
+    private SharedPreferences langPrefs;
     private ActivityResultLauncher<String> imagePicker;
     private static final String DEFAULT_EMOJI = "🏊‍♂️";
 
     private ProgressBar pbFreestyle, pbBreast, pbFly;
 
+    private FirebaseAuth mAuth;
+    private FirebaseFirestore db;
+    private FirebaseStorage storage;
+    private String currentUid;
+
+    private String cloudAllRes = "";
+    private String cloudLastCompletedDate = "";
+    private final ExecutorService executor = Executors.newSingleThreadExecutor();
+
     @Nullable
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.fragment_profile, container, false);
-        prefs = requireActivity().getSharedPreferences("AquaTime", Context.MODE_PRIVATE);
+
+        mAuth = FirebaseAuth.getInstance();
+        db = FirebaseFirestore.getInstance();
+        storage = FirebaseStorage.getInstance();
+
+        FirebaseUser currentUser = mAuth.getCurrentUser();
+        if (currentUser != null) {
+            currentUid = currentUser.getUid();
+        }
+
+        langPrefs = requireContext().getSharedPreferences("AquaTime", Context.MODE_PRIVATE);
 
         initViews(view);
 
         imagePicker = registerForActivityResult(new ActivityResultContracts.GetContent(), uri -> {
-            if (uri != null) {
-                String path = copyToInternalStorage(uri);
-                if (path != null) {
-                    prefs.edit().putString("profile_type", "uri").putString("profile_val", path).apply();
-                    renderProfileImage();
-                }
+            if (uri != null && currentUid != null) {
+                uploadImageToFirebaseStorage(uri);
             }
         });
 
-        loadProfileData();
+        if (currentUid != null) {
+            loadProfileDataFromFirestore();
+        } else {
+            setupGuestMode();
+        }
 
         return view;
     }
@@ -76,9 +107,7 @@ public class ProfileFragment extends Fragment {
         tvAchievements = v.findViewById(R.id.tv_profile_achievements);
         imgProfile = v.findViewById(R.id.img_avatar);
 
-        pbFreestyle = v.findViewById(R.id.pb_freestyle);
-        pbBreast = v.findViewById(R.id.pb_breast);
-        pbFly = v.findViewById(R.id.pb_fly);
+        pbAvatarLoading = v.findViewById(R.id.pb_avatar_loading);
 
         v.findViewById(R.id.btn_edit_profile).setOnClickListener(view ->
                 Navigation.findNavController(view).navigate(R.id.editProfileFragment));
@@ -94,269 +123,198 @@ public class ProfileFragment extends Fragment {
         }
     }
 
-    private void loadProfileData() {
-        FirebaseUser currentUser = FirebaseAuth.getInstance().getCurrentUser();
+    private void setupGuestMode() {
+        boolean en = isEnglish();
+        tvName.setText("Guest");
+        tvEmail.setText(en ? "Guest Mode" : "Гостевой режим");
+        tvCountry.setText("📍");
+        tvDetails.setText("📏 - " + (en ? "cm" : "см") + " | ⚖ - " + (en ? "kg" : "кг") + "\n🏊 " + (en ? "Style: Freestyle" : "Стиль: Вольный стиль"));
+        tvAchievements.setText(en ? "No achievements added yet" : "Достижения еще не добавлены");
+        tvMainRating.setText("45");
+        updateLevelCardText(45);
+        setEmojiAvatar(DEFAULT_EMOJI);
+    }
+
+    private void loadProfileDataFromFirestore() {
+        FirebaseUser currentUser = mAuth.getCurrentUser();
         boolean en = isEnglish();
 
-        String firstName = prefs.getString("firstName", "Guest");
-        String lastName = prefs.getString("lastName", "");
-        tvName.setText((firstName + " " + lastName).trim());
-
-        if (currentUser != null && currentUser.getEmail() != null && !currentUser.getEmail().isEmpty()) {
+        if (currentUser != null && currentUser.getEmail() != null) {
             tvEmail.setText(currentUser.getEmail());
-        } else {
-            tvEmail.setText(en ? "Guest Mode" : "Гостевой режим");
         }
 
-        if (currentUser != null) {
-            String userId = currentUser.getUid();
-            FirebaseDatabase.getInstance().getReference("users").child(userId).get()
-                    .addOnSuccessListener(snapshot -> {
-                        if (snapshot.exists() && isAdded() && getContext() != null) {
-                            SharedPreferences.Editor editor = prefs.edit();
+        db.collection("users").document(currentUid).get()
+                .addOnSuccessListener(documentSnapshot -> {
+                    if (documentSnapshot.exists() && isAdded()) {
 
-                            if (snapshot.hasChild("all_res")) {
-                                editor.putString("all_res", snapshot.child("all_res").getValue(String.class));
-                            }
-                            if (snapshot.hasChild("total_meters")) {
-                                Integer tm = snapshot.child("total_meters").getValue(Integer.class);
-                                if (tm != null) editor.putInt("total_meters", tm);
-                            }
-                            if (snapshot.hasChild("trainings_count")) {
-                                Integer tc = snapshot.child("trainings_count").getValue(Integer.class);
-                                if (tc != null) editor.putInt("trainings_count", tc);
-                            }
-                            editor.apply();
+                        String firstName = documentSnapshot.getString("firstName");
+                        String lastName = documentSnapshot.getString("lastName");
+                        if (firstName == null || firstName.isEmpty()) firstName = "Guest";
+                        if (lastName == null) lastName = "";
+                        tvName.setText((firstName + " " + lastName).trim());
 
-                            int updatedRating = calculateFifaRating();
-                            tvMainRating.setText(String.valueOf(updatedRating));
-                            updateLevelCardText(updatedRating);
-                            calculateSwimSkills();
+                        String savedCountryIso = documentSnapshot.getString("nation_iso");
+                        if (savedCountryIso == null || savedCountryIso.isEmpty()) {
+                            tvCountry.setText("📍");
+                        } else {
+                            Locale displayLocale = en ? Locale.ENGLISH : new Locale("ru");
+                            Locale countryLocale = new Locale("", savedCountryIso);
+                            tvCountry.setText("📍 " + countryLocale.getDisplayCountry(displayLocale));
                         }
-                    }).addOnFailureListener(Throwable::printStackTrace);
-        }
+
+                        String styleLabel = en ? "Style: " : "Стиль: ";
+                        String cmUnit = en ? "cm" : "см";
+                        String kgUnit = en ? "kg" : "кг";
+                        String height = documentSnapshot.getString("height");
+                        String weight = documentSnapshot.getString("weight");
+                        String styleKey = documentSnapshot.getString("style_key");
+
+                        if (height == null || height.isEmpty()) height = "-";
+                        if (weight == null || weight.isEmpty()) weight = "-";
+                        if (styleKey == null) styleKey = "freestyle";
+
+                        String userStyle;
+                        if (en) {
+                            if (styleKey.equals("breaststroke")) userStyle = "Breaststroke";
+                            else if (styleKey.equals("butterfly")) userStyle = "Butterfly";
+                            else if (styleKey.equals("backstroke")) userStyle = "Backstroke";
+                            else if (styleKey.equals("medley")) userStyle = "Individual Medley";
+                            else userStyle = "Freestyle";
+                        } else {
+                            if (styleKey.equals("breaststroke")) userStyle = "Брасс";
+                            else if (styleKey.equals("butterfly")) userStyle = "Баттерфляй";
+                            else if (styleKey.equals("backstroke")) userStyle = "На спине";
+                            else if (styleKey.equals("medley")) userStyle = "Комплекс";
+                            else userStyle = "Вольный стиль";
+                        }
+                        tvDetails.setText("📏 " + height + " " + cmUnit + " | ⚖ " + weight + " " + kgUnit + "\n🏊 " + styleLabel + userStyle);
+
+                        if (tvAchievements != null) {
+                            String achievementsText;
+                            if (en) {
+                                achievementsText = documentSnapshot.getString("achievements_en");
+                                if (achievementsText == null || achievementsText.isEmpty())
+                                    achievementsText = documentSnapshot.getString("achievements_ru");
+                            } else {
+                                achievementsText = documentSnapshot.getString("achievements_ru");
+                                if (achievementsText == null || achievementsText.isEmpty())
+                                    achievementsText = documentSnapshot.getString("achievements_en");
+                            }
+
+                            if (achievementsText == null || achievementsText.isEmpty()) {
+                                tvAchievements.setText(en ? "No achievements added yet" : "Достижения еще не добавлены");
+                            } else {
+                                tvAchievements.setText(achievementsText);
+                            }
+                        }
+
+                        cloudAllRes = documentSnapshot.getString("all_res");
+                        if (cloudAllRes == null) cloudAllRes = "";
+
+                        cloudLastCompletedDate = documentSnapshot.getString("last_completed_date");
+                        if (cloudLastCompletedDate == null) cloudLastCompletedDate = "";
+
+                        int updatedRating = calculateSwimRating();
+                        tvMainRating.setText(String.valueOf(updatedRating));
+                        updateLevelCardText(updatedRating);
 
 
-        String savedCountryIso = prefs.getString("nation_iso", "");
-        if (savedCountryIso.isEmpty()) {
-            tvCountry.setText("📍");
-        } else {
-            Locale displayLocale = en ? Locale.ENGLISH : new Locale("ru");
-            Locale countryLocale = new Locale("", savedCountryIso);
-            tvCountry.setText("📍 " + countryLocale.getDisplayCountry(displayLocale));
-        }
-
-
-        String styleLabel = en ? "Style: " : "Стиль: ";
-        String cmUnit = en ? "cm" : "см";
-        String kgUnit = en ? "kg" : "кг";
-
-        String styleKey = prefs.getString("style_key", "freestyle");
-        String userStyle;
-
-        if (en) {
-            if (styleKey.equals("breaststroke")) userStyle = "Breaststroke";
-            else if (styleKey.equals("butterfly")) userStyle = "Butterfly";
-            else if (styleKey.equals("backstroke")) userStyle = "Backstroke";
-            else if (styleKey.equals("medley")) userStyle = "Individual Medley";
-            else userStyle = "Freestyle";
-        } else {
-            if (styleKey.equals("breaststroke")) userStyle = "Брасс";
-            else if (styleKey.equals("butterfly")) userStyle = "Баттерфляй";
-            else if (styleKey.equals("backstroke")) userStyle = "На спине";
-            else if (styleKey.equals("medley")) userStyle = "Комплекс";
-            else userStyle = "Вольный стиль";
-        }
-
-        tvDetails.setText("📏 " + prefs.getString("height", "-") + " " + cmUnit + " | ⚖ " +
-                prefs.getString("weight", "-") + " " + kgUnit + "\n🏊 " + styleLabel + userStyle);
-
-        // --- ДВУЯЗЫЧНЫЕ ДОСТИЖЕНИЯ ---
-        if (tvAchievements != null) {
-            String achievementsText;
-            if (en) {
-                achievementsText = prefs.getString("achievements_en", "");
-                if (achievementsText.isEmpty()) achievementsText = prefs.getString("achievements_ru", "");
-            } else {
-                achievementsText = prefs.getString("achievements_ru", "");
-                if (achievementsText.isEmpty()) achievementsText = prefs.getString("achievements_en", "");
-            }
-
-            if (achievementsText.isEmpty()) {
-                tvAchievements.setText(en ? "No achievements added yet" : "Достижения еще не добавлены");
-            } else {
-                tvAchievements.setText(achievementsText);
-            }
-        }
-
-        int cbRating = calculateFifaRating();
-        tvMainRating.setText(String.valueOf(cbRating));
-        updateLevelCardText(cbRating);
-
-        calculateSwimSkills();
-        renderProfileImage();
-    }
-
-    private void calculateSwimSkills() {
-        if (pbFreestyle == null || pbBreast == null || pbFly == null) return;
-
-        String data = prefs.getString("all_res", "");
-
-        if (data.isEmpty()) {
-            pbFreestyle.setProgress(10);
-            pbBreast.setProgress(10);
-            pbFly.setProgress(10);
-            return;
-        }
-
-        String[] entries = data.split(";");
-        int crawlMeters = 0;
-        int breastMeters = 0;
-        int flyMeters = 0;
-
-        for (String entry : entries) {
-            try {
-                String[] p = entry.split("\\|");
-                if (p.length < 2) continue;
-
-                int meters = Integer.parseInt(p[0].trim());
-                String workoutStyle = p[1].toLowerCase();
-
-                if (workoutStyle.contains("вольный") || workoutStyle.contains("кроль") || workoutStyle.contains("freestyle") || workoutStyle.contains("crawl")) {
-                    crawlMeters += meters;
-                } else if (workoutStyle.contains("брасс") || workoutStyle.contains("breaststroke")) {
-                    breastMeters += meters;
-                } else if (workoutStyle.contains("баттерфляй") || workoutStyle.contains("butterfly") || workoutStyle.contains("дельфин")) {
-                    flyMeters += meters;
-                } else {
-                    crawlMeters += meters / 3;
-                    breastMeters += meters / 3;
-                    flyMeters += meters / 3;
-                }
-            } catch (Exception ignored) {
-            }
-        }
-
-        int maxSkillThreshold = 5000;
-
-        int crawlPercent = Math.min(100, 10 + (crawlMeters * 90 / maxSkillThreshold));
-        int breastPercent = Math.min(100, 10 + (breastMeters * 90 / maxSkillThreshold));
-        int flyPercent = Math.min(100, 10 + (flyMeters * 90 / maxSkillThreshold));
-
-        pbFreestyle.setProgress(crawlPercent);
-        pbBreast.setProgress(breastPercent);
-        pbFly.setProgress(flyPercent);
-    }
-
-    private void updateLevelCardText(int rating) {
-        boolean en = isEnglish();
-        if (rating < 55) {
-            tvLevel.setText(en ? "Card: Bronze 🟫" : "Карточка: Бронза 🟫");
-        } else if (rating < 75) {
-            tvLevel.setText(en ? "Card: Silver ⬜" : "Карточка: Серебро ⬜");
-        } else if (rating < 90) {
-            tvLevel.setText(en ? "Card: Gold 🟨" : "Карточка: Золото 🟨");
-        } else {
-            tvLevel.setText(en ? "Card: Elite 💎" : "Карточка: Элита 💎");
-        }
-    }
-
-    private int calculateFifaRating() {
-        String data = prefs.getString("all_res", "");
-        if (data.isEmpty()) return 45;
-
-        String[] entries = data.split(";");
-        int totalTrainings = entries.length;
-        int totalMeters = 0;
-
-        for (String entry : entries) {
-            try {
-                String[] p = entry.split("\\|");
-                int meters = Integer.parseInt(p[0].trim());
-                totalMeters += meters;
-            } catch (Exception ignored) {
-            }
-        }
-
-        double experiencePoints = Math.min(15.0, totalTrainings * 0.5);
-        double distancePoints = Math.pow(totalMeters, 0.25) * 7.1;
-        int rating = 45 + (int) (experiencePoints + distancePoints);
-
-        if (totalTrainings > 0 && (totalMeters / totalTrainings) >= 1500) {
-            rating += 2;
-        }
-
-        String lastDateStr = prefs.getString("last_completed_date", "");
-        if (!lastDateStr.isEmpty()) {
-            try {
-                java.text.SimpleDateFormat sdf = new java.text.SimpleDateFormat("dd.MM.yyyy", java.util.Locale.getDefault());
-                java.util.Date lastWorkoutDate = sdf.parse(lastDateStr);
-
-                if (lastWorkoutDate != null) {
-                    long diffInMs = Math.abs(System.currentTimeMillis() - lastWorkoutDate.getTime());
-                    long diffInDays = diffInMs / (1000 * 60 * 60 * 24);
-
-                    if (diffInDays > 3) {
-                        long lazyDays = diffInDays - 3;
-                        int penalty = (int) (lazyDays * 2);
-                        if (penalty > 15) penalty = 15;
-                        rating -= penalty;
+                        String avatarType = documentSnapshot.getString("profile_type");
+                        String avatarVal = documentSnapshot.getString("profile_val");
+                        if (avatarType == null) avatarType = "emoji";
+                        if (avatarVal == null) avatarVal = DEFAULT_EMOJI;
+                        renderProfileImage(avatarType, avatarVal);
                     }
-                }
-            } catch (Exception ignored) {
-            }
-        }
-
-        if (rating > 85) {
-            int overEightFive = rating - 85;
-            rating = 85 + (overEightFive / 3);
-        }
-
-        if (rating < 45) rating = 45;
-        if (rating > 99) rating = 99;
-
-        return rating;
+                })
+                .addOnFailureListener(e -> {
+                    if (isAdded()) setupGuestMode();
+                });
     }
 
-    private void showLogoutDialog() {
-        boolean en = isEnglish();
-        String title = en ? "Logout Account" : "Выход из аккаунта";
-        String msg = en ? "Are you sure you want to log out? Your local workout data will be kept." : "Вы уверены, что хотите выйти? Ваши локальные данные тренировок будут сохранены.";
-        String pos = en ? "Log Out" : "Выйти";
-        String neg = en ? "Cancel" : "Отмена";
+    private void uploadImageToFirebaseStorage(Uri uri) {
+        if (currentUid == null || getContext() == null) return;
 
-        new AlertDialog.Builder(requireContext())
-                .setTitle(title)
-                .setMessage(msg)
-                .setPositiveButton(pos, (dialog, which) -> performLogout())
-                .setNegativeButton(neg, null)
-                .show();
-    }
+        if (pbAvatarLoading != null) pbAvatarLoading.setVisibility(View.VISIBLE);
 
-    private void performLogout() {
+        StorageReference avatarRef = storage.getReference().child("avatars/" + currentUid + ".jpg");
+
         try {
-            FirebaseAuth.getInstance().signOut();
+            InputStream inputStream = requireContext().getContentResolver().openInputStream(uri);
+            Bitmap bitmap = BitmapFactory.decodeStream(inputStream);
+            ByteArrayOutputStream baos = new ByteArrayOutputStream();
+            if (bitmap != null) {
+                bitmap.compress(Bitmap.CompressFormat.JPEG, 75, baos);
+                byte[] data = baos.toByteArray();
+
+                avatarRef.putBytes(data)
+                        .addOnSuccessListener(taskSnapshot -> {
+                            avatarRef.getDownloadUrl().addOnSuccessListener(downloadUri -> {
+                                String imageUrl = downloadUri.toString();
+                                saveAvatarToFirestore("url", imageUrl);
+                            });
+                        })
+                        .addOnFailureListener(e -> {
+                            if (pbAvatarLoading != null) pbAvatarLoading.setVisibility(View.GONE);
+                            Toast.makeText(getContext(), isEnglish() ? "Upload failed" : "Ошибка загрузки фото", Toast.LENGTH_SHORT).show();
+                        });
+            }
         } catch (Exception e) {
+            if (pbAvatarLoading != null) pbAvatarLoading.setVisibility(View.GONE);
             e.printStackTrace();
         }
-        if (getActivity() != null) {
-            android.content.Intent intent = new android.content.Intent(getActivity(), david.dokholyan.aquatime.LoginActivity.class);
-            intent.addFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK | android.content.Intent.FLAG_ACTIVITY_CLEAR_TASK);
-            startActivity(intent);
-            getActivity().finish();
-        }
     }
 
-    private void renderProfileImage() {
-        String type = prefs.getString("profile_type", "emoji");
-        String val = prefs.getString("profile_val", DEFAULT_EMOJI);
+    private void saveAvatarToFirestore(String type, String value) {
+        if (currentUid == null) return;
 
-        if ("uri".equals(type)) {
+        Map<String, Object> avatarData = new HashMap<>();
+        avatarData.put("profile_type", type);
+        avatarData.put("profile_val", value);
+
+        db.collection("users").document(currentUid)
+                .set(avatarData, SetOptions.merge())
+                .addOnSuccessListener(aVoid -> {
+                    if (isAdded()) {
+                        renderProfileImage(type, value);
+                    }
+                })
+                .addOnFailureListener(e -> {
+                    if (pbAvatarLoading != null) pbAvatarLoading.setVisibility(View.GONE);
+                });
+    }
+
+    private void renderProfileImage(String type, String val) {
+        if (pbAvatarLoading != null) pbAvatarLoading.setVisibility(View.GONE);
+
+        if ("url".equals(type)) {
+            if (pbAvatarLoading != null) pbAvatarLoading.setVisibility(View.VISIBLE);
+
+            executor.execute(() -> {
+                try {
+                    InputStream is = new URL(val).openStream();
+                    Bitmap bitmap = BitmapFactory.decodeStream(is);
+
+                    new Handler(Looper.getMainLooper()).post(() -> {
+                        if (bitmap != null && isAdded()) {
+                            imgProfile.setScaleType(ImageView.ScaleType.FIT_CENTER);
+                            imgProfile.setImageDrawable(createCircularBitmap(bitmap));
+                        } else {
+                            setEmojiAvatar(DEFAULT_EMOJI);
+                        }
+                        if (pbAvatarLoading != null) pbAvatarLoading.setVisibility(View.GONE);
+                    });
+                } catch (Exception e) {
+                    new Handler(Looper.getMainLooper()).post(() -> {
+                        setEmojiAvatar(DEFAULT_EMOJI);
+                        if (pbAvatarLoading != null) pbAvatarLoading.setVisibility(View.GONE);
+                    });
+                    e.printStackTrace();
+                }
+            });
+        } else if ("uri".equals(type)) {
             File f = new File(val);
             if (f.exists()) {
-                BitmapFactory.Options opt = new BitmapFactory.Options();
-                opt.inSampleSize = 2;
-                Bitmap bitmap = BitmapFactory.decodeFile(f.getAbsolutePath(), opt);
+                Bitmap bitmap = BitmapFactory.decodeFile(f.getAbsolutePath());
                 if (bitmap != null) {
                     imgProfile.setScaleType(ImageView.ScaleType.FIT_CENTER);
                     imgProfile.setImageDrawable(createCircularBitmap(bitmap));
@@ -481,35 +439,106 @@ public class ProfileFragment extends Fragment {
                 .create();
 
         gridView.setOnItemClickListener((parent, view1, position, id) -> {
-            prefs.edit()
-                    .putString("profile_type", "emoji")
-                    .putString("profile_val", emojis[position])
-                    .apply();
-
-            renderProfileImage();
+            saveAvatarToFirestore("emoji", emojis[position]);
             dialog.dismiss();
         });
 
         dialog.show();
     }
 
-    private String copyToInternalStorage(Uri uri) {
+    private void showLogoutDialog() {
+        boolean en = isEnglish();
+        String title = en ? "Logout Account" : "Выход из аккаунта";
+        String msg = en ? "Are you sure you want to log out?" : "Вы уверены, что хотите выйти?";
+        String pos = en ? "Log Out" : "Выйти";
+        String neg = en ? "Cancel" : "Отмена";
+
+        new AlertDialog.Builder(requireContext())
+                .setTitle(title)
+                .setMessage(msg)
+                .setPositiveButton(pos, (dialog, which) -> performLogout())
+                .setNegativeButton(neg, null)
+                .show();
+    }
+
+    private void performLogout() {
         try {
-            InputStream is = requireContext().getContentResolver().openInputStream(uri);
-            File f = new File(requireContext().getFilesDir(), "profile_aqua.jpg");
-            OutputStream os = new FileOutputStream(f);
-            byte[] buf = new byte[1024];
-            int len;
-            while ((len = is.read(buf)) > 0) os.write(buf, 0, len);
-            os.close();
-            is.close();
-            return f.getAbsolutePath();
+            mAuth.signOut();
         } catch (Exception e) {
-            return null;
+            e.printStackTrace();
+        }
+        if (getActivity() != null) {
+            android.content.Intent intent = new android.content.Intent(getActivity(), david.dokholyan.aquatime.LoginActivity.class);
+            intent.addFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK | android.content.Intent.FLAG_ACTIVITY_CLEAR_TASK);
+            startActivity(intent);
+            getActivity().finish();
         }
     }
 
     private boolean isEnglish() {
-        return prefs.getString("app_lang", "ru").equalsIgnoreCase("en");
+        return langPrefs.getString("app_lang", "ru").equalsIgnoreCase("en");
+    }
+
+    @Override
+    public void onDestroy() {
+        super.onDestroy();
+        executor.shutdown();
+    }
+
+    private void updateLevelCardText(int rating) {
+        boolean en = isEnglish();
+        if (rating < 55) {
+            tvLevel.setText(en ? "Card: Bronze 🟫" : "Карточка: Бронза 🟫");
+        } else if (rating < 75) {
+            tvLevel.setText(en ? "Card: Silver ⬜" : "Карточка: Серебро ⬜");
+        } else if (rating < 90) {
+            tvLevel.setText(en ? "Card: Gold 🟨" : "Карточка: Золото 🟨");
+        } else {
+            tvLevel.setText(en ? "Card: Elite 💎" : "Карточка: Элита 💎");
+        }
+    }
+
+    private int calculateSwimRating() {
+        if (cloudAllRes.isEmpty()) return 45;
+
+        String[] entries = cloudAllRes.split(";");
+        int totalMeters = 0;
+
+        for (String entry : entries) {
+            try {
+                String[] p = entry.split("\\|");
+                int meters = Integer.parseInt(p[0].trim());
+                totalMeters += meters;
+            } catch (Exception ignored) {
+            }
+        }
+
+        int progressPoints = (totalMeters / 1000) * 2;
+        int rating = 45 + progressPoints;
+
+        if (!cloudLastCompletedDate.isEmpty()) {
+            try {
+                java.text.SimpleDateFormat sdf = new java.text.SimpleDateFormat("dd.MM.yyyy", Locale.getDefault());
+                java.util.Date lastWorkoutDate = sdf.parse(cloudLastCompletedDate);
+
+                if (lastWorkoutDate != null) {
+                    long diffInMs = Math.abs(System.currentTimeMillis() - lastWorkoutDate.getTime());
+                    long diffInDays = diffInMs / (1000 * 60 * 60 * 24);
+
+                    if (diffInDays > 3) {
+                        long lazyDays = diffInDays - 3;
+                        int penalty = (int) (lazyDays * 2);
+                        if (penalty > 15) penalty = 15;
+                        rating -= penalty;
+                    }
+                }
+            } catch (Exception ignored) {
+            }
+        }
+
+        if (rating < 45) rating = 45;
+        if (rating > 99) rating = 99;
+
+        return rating;
     }
 }

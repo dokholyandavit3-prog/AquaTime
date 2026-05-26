@@ -4,6 +4,8 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.res.Configuration;
+import android.net.ConnectivityManager;
+import android.net.NetworkCapabilities;
 import android.os.Bundle;
 import android.widget.Button;
 import android.widget.EditText;
@@ -16,8 +18,7 @@ import androidx.appcompat.app.AppCompatActivity;
 
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
-import com.google.firebase.database.DatabaseReference;
-import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.firestore.FirebaseFirestore;
 
 import java.util.HashMap;
 import java.util.Locale;
@@ -30,12 +31,11 @@ public class RegisterActivity extends AppCompatActivity {
     private TextView tvToLogin;
     private ImageView btnChangeLanguage;
     private FirebaseAuth mAuth;
-    private DatabaseReference mDatabase;
+    private FirebaseFirestore mFirestore;
     private SharedPreferences prefs;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
-
         prefs = getSharedPreferences("AquaTime", Context.MODE_PRIVATE);
         applySavedLanguage();
 
@@ -43,7 +43,7 @@ public class RegisterActivity extends AppCompatActivity {
         setContentView(R.layout.activity_register);
 
         mAuth = FirebaseAuth.getInstance();
-        mDatabase = FirebaseDatabase.getInstance().getReference();
+        mFirestore = FirebaseFirestore.getInstance();
 
         FirebaseUser currentUser = mAuth.getCurrentUser();
         if (currentUser != null && currentUser.isEmailVerified()) {
@@ -71,6 +71,19 @@ public class RegisterActivity extends AppCompatActivity {
         }
     }
 
+    private boolean isNetworkAvailable() {
+        ConnectivityManager connectivityManager = (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
+        if (connectivityManager != null) {
+            NetworkCapabilities capabilities = connectivityManager.getNetworkCapabilities(connectivityManager.getActiveNetwork());
+            if (capabilities != null) {
+                return capabilities.hasTransport(NetworkCapabilities.TRANSPORT_WIFI) ||
+                        capabilities.hasTransport(NetworkCapabilities.TRANSPORT_CELLULAR) ||
+                        capabilities.hasTransport(NetworkCapabilities.TRANSPORT_ETHERNET);
+            }
+        }
+        return false;
+    }
+
     private void showLanguageSelectionDialog() {
         String[] languages = {"English", "Русский"};
         boolean isEn = prefs.getString("app_lang", "ru").equalsIgnoreCase("en");
@@ -80,10 +93,7 @@ public class RegisterActivity extends AppCompatActivity {
 
         builder.setItems(languages, (dialog, which) -> {
             String targetLang = (which == 0) ? "en" : "ru";
-
-
             prefs.edit().putString("app_lang", targetLang).apply();
-
 
             Intent intent = getIntent();
             finish();
@@ -104,12 +114,17 @@ public class RegisterActivity extends AppCompatActivity {
     }
 
     private void registerUser() {
+        boolean isEn = prefs.getString("app_lang", "ru").equalsIgnoreCase("en");
+
+        if (!isNetworkAvailable()) {
+            Toast.makeText(this, isEn ? "No internet connection. Cannot create account." : "Нет подключения к интернету. Не удалось создать аккаунт.", Toast.LENGTH_LONG).show();
+            return;
+        }
+
         String username = etUsername.getText().toString().trim();
         String email = etEmail.getText().toString().trim();
         String password = etPassword.getText().toString().trim();
         String confirmPassword = etConfirmPassword.getText().toString().trim();
-
-        boolean isEn = prefs.getString("app_lang", "ru").equalsIgnoreCase("en");
 
         if (username.isEmpty() || email.isEmpty() || password.isEmpty() || confirmPassword.isEmpty()) {
             Toast.makeText(this, isEn ? "Please fill all fields" : "Пожалуйста, заполните все поля", Toast.LENGTH_SHORT).show();
@@ -133,32 +148,48 @@ public class RegisterActivity extends AppCompatActivity {
                         FirebaseUser user = mAuth.getCurrentUser();
                         if (user != null) {
                             String userId = user.getUid();
+
                             Map<String, Object> userMap = new HashMap<>();
-                            userMap.put("username", username);
+                            userMap.put("firstName", username);
                             userMap.put("email", email);
-                            userMap.put("total_meters", 0);
-                            userMap.put("trainings_count", 0);
-                            userMap.put("weekly_meters", 0);
+                            userMap.put("total_meters", 0L);
+                            userMap.put("trainings_count", 0L);
+                            userMap.put("weekly_meters", 0L);
                             userMap.put("all_res", "");
 
-                            mDatabase.child("users").child(userId).setValue(userMap);
-
-                            user.sendEmailVerification().addOnCompleteListener(emailTask -> {
-                                if (emailTask.isSuccessful()) {
-                                    Toast.makeText(this, isEn ? "Verification email sent! Confirm it and login." : "Письмо подтверждения отправлено! Подтвердите его и войдите.", Toast.LENGTH_LONG).show();
-                                    mAuth.signOut();
-
-                                    Intent intent = new Intent(RegisterActivity.this, LoginActivity.class);
-                                    startActivity(intent);
-                                    finish();
-                                }
-                            });
+                            mFirestore.collection("users").document(userId)
+                                    .set(userMap)
+                                    .addOnCompleteListener(fsTask -> {
+                                        if (fsTask.isSuccessful()) {
+                                            sendVerificationEmail(user, isEn);
+                                        } else {
+                                            String error = fsTask.getException() != null ? fsTask.getException().getMessage() : "Firestore error";
+                                            Toast.makeText(this, "Firestore Error: " + error, Toast.LENGTH_SHORT).show();
+                                            btnRegister.setEnabled(true);
+                                        }
+                                    });
                         }
                     } else {
                         Toast.makeText(this, (isEn ? "Error: " : "Ошибка: ") + task.getException().getMessage(), Toast.LENGTH_SHORT).show();
                         btnRegister.setEnabled(true);
                     }
                 });
+    }
+
+    private void sendVerificationEmail(FirebaseUser user, boolean isEn) {
+        user.sendEmailVerification().addOnCompleteListener(emailTask -> {
+            if (emailTask.isSuccessful()) {
+                Toast.makeText(this, isEn ? "Verification email sent! Confirm it and login." : "Письмо подтверждения отправлено! Подтвердите его и войдите.", Toast.LENGTH_LONG).show();
+                mAuth.signOut();
+
+                Intent intent = new Intent(RegisterActivity.this, LoginActivity.class);
+                startActivity(intent);
+                finish();
+            } else {
+                Toast.makeText(this, "Email error: " + emailTask.getException().getMessage(), Toast.LENGTH_SHORT).show();
+                btnRegister.setEnabled(true);
+            }
+        });
     }
 
     private void navigateToMain() {

@@ -7,7 +7,7 @@ import android.view.ViewGroup;
 import android.webkit.WebSettings;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
-import android.widget.ProgressBar; // Добавили импорт
+import android.widget.ProgressBar;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -26,7 +26,6 @@ public class AthleteDetailFragment extends Fragment {
         View view = inflater.inflate(R.layout.fragment_athlete_detail, container, false);
 
         WebView webView = view.findViewById(R.id.webView);
-        // Используем View для кнопки назад, чтобы не было ошибки приведения типов (CastException)
         View back = view.findViewById(R.id.btn_back);
         ProgressBar loader = view.findViewById(R.id.web_loader);
 
@@ -37,7 +36,6 @@ public class AthleteDetailFragment extends Fragment {
         if (webView != null) {
             WebSettings webSettings = webView.getSettings();
             webSettings.setJavaScriptEnabled(true);
-            // Добавляем поддержку хранилища для корректной работы Википедии
             webSettings.setDomStorageEnabled(true);
 
             webView.setWebViewClient(new WebViewClient() {

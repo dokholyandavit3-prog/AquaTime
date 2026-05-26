@@ -11,16 +11,29 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
 import androidx.navigation.Navigation;
+
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseUser;
+import com.google.firebase.firestore.FirebaseFirestore;
+
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Locale;
+import java.util.Map;
+
 import david.dokholyan.aquatime.R;
 
 public class EditProfileFragment extends Fragment {
 
     private EditText etFirst, etLast, etHeight, etWeight, etAchievements;
     private AutoCompleteTextView spinStyle, spinNation;
+
+    private FirebaseAuth mAuth;
+    private FirebaseFirestore db;
+    private String currentUid;
+
     private SharedPreferences prefs;
     private boolean isEnglish;
 
@@ -33,13 +46,26 @@ public class EditProfileFragment extends Fragment {
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.fragment_edit_profile, container, false);
-        prefs = requireActivity().getSharedPreferences("AquaTime", Context.MODE_PRIVATE);
 
+        mAuth = FirebaseAuth.getInstance();
+        db = FirebaseFirestore.getInstance();
+        FirebaseUser currentUser = mAuth.getCurrentUser();
+
+        if (currentUser != null) {
+            currentUid = currentUser.getUid();
+        }
+
+        prefs = requireActivity().getSharedPreferences("AquaTime", Context.MODE_PRIVATE);
         isEnglish = prefs.getString("app_lang", "ru").equalsIgnoreCase("en");
 
         initFields(view);
         setupSpinners();
-        loadCurrentData();
+
+        if (currentUid != null) {
+            loadCurrentDataFromFirestore();
+        } else {
+            Toast.makeText(getContext(), isEnglish ? "User not authorized" : "Пользователь не авторизован", Toast.LENGTH_SHORT).show();
+        }
 
         view.findViewById(R.id.btn_save).setOnClickListener(this::saveAndExit);
         view.findViewById(R.id.btn_back).setOnClickListener(v -> Navigation.findNavController(v).popBackStack());
@@ -60,7 +86,6 @@ public class EditProfileFragment extends Fragment {
     private void setupSpinners() {
         if (getContext() == null) return;
 
-        // 1. Настройка стилей плавания
         styleDisplayNames = isEnglish ?
                 new String[]{"Freestyle", "Breaststroke", "Butterfly", "Backstroke", "Individual Medley"} :
                 new String[]{"Вольный стиль", "Брасс", "Баттерфляй", "На спине", "Комплекс"};
@@ -68,26 +93,20 @@ public class EditProfileFragment extends Fragment {
         ArrayAdapter<String> styleAdapter = new ArrayAdapter<>(getContext(), android.R.layout.simple_dropdown_item_1line, styleDisplayNames);
         spinStyle.setAdapter(styleAdapter);
 
-
         ArrayList<CountryItem> countryList = new ArrayList<>();
         HashSet<String> addedCodes = new HashSet<>();
         Locale displayLocale = isEnglish ? Locale.ENGLISH : new Locale("ru");
 
-
         for (String code : Locale.getISOCountries()) {
             if (!addedCodes.contains(code)) {
                 addedCodes.add(code);
-
                 Locale locale = new Locale("", code);
                 String name = locale.getDisplayCountry(displayLocale);
-
-
                 if (!name.isEmpty() && !name.equals(code)) {
                     countryList.add(new CountryItem(code, name));
                 }
             }
         }
-
 
         Collections.sort(countryList, (c1, c2) -> c1.displayName.compareToIgnoreCase(c2.displayName));
 
@@ -103,42 +122,57 @@ public class EditProfileFragment extends Fragment {
         spinNation.setAdapter(nationAdapter);
     }
 
-    private void loadCurrentData() {
-        etFirst.setText(prefs.getString("firstName", ""));
-        etLast.setText(prefs.getString("lastName", ""));
-        etHeight.setText(prefs.getString("height", ""));
-        etWeight.setText(prefs.getString("weight", ""));
+    private void loadCurrentDataFromFirestore() {
+        db.collection("users").document(currentUid).get()
+                .addOnSuccessListener(documentSnapshot -> {
+                    if (documentSnapshot.exists() && isAdded()) {
+                        etFirst.setText(documentSnapshot.getString("firstName"));
+                        etLast.setText(documentSnapshot.getString("lastName"));
+                        etHeight.setText(documentSnapshot.getString("height"));
+                        etWeight.setText(documentSnapshot.getString("weight"));
 
-        if (isEnglish) {
-            etAchievements.setText(prefs.getString("achievements_en", ""));
-        } else {
-            etAchievements.setText(prefs.getString("achievements_ru", ""));
-        }
+                        if (isEnglish) {
+                            etAchievements.setText(documentSnapshot.getString("achievements_en"));
+                        } else {
+                            etAchievements.setText(documentSnapshot.getString("achievements_ru"));
+                        }
 
-        String savedStyleKey = prefs.getString("style_key", "freestyle");
-        String savedCountryIso = prefs.getString("nation_iso", "");
+                        String savedStyleKey = documentSnapshot.getString("style_key");
+                        String savedCountryIso = documentSnapshot.getString("nation_iso");
 
+                        if (savedStyleKey != null) {
+                            for (int i = 0; i < styleKeys.length; i++) {
+                                if (styleKeys[i].equals(savedStyleKey)) {
+                                    spinStyle.setText(styleDisplayNames[i], false);
+                                    break;
+                                }
+                            }
+                        }
 
-        for (int i = 0; i < styleKeys.length; i++) {
-            if (styleKeys[i].equals(savedStyleKey)) {
-                spinStyle.setText(styleDisplayNames[i], false);
-                break;
-            }
-        }
-
-
-        if (!savedCountryIso.isEmpty()) {
-            int countryPosition = countryIsoKeys.indexOf(savedCountryIso);
-            if (countryPosition >= 0) {
-                spinNation.setText(countryDisplayNames.get(countryPosition), false);
-            }
-        }
+                        if (savedCountryIso != null && !savedCountryIso.isEmpty()) {
+                            int countryPosition = countryIsoKeys.indexOf(savedCountryIso);
+                            if (countryPosition >= 0) {
+                                spinNation.setText(countryDisplayNames.get(countryPosition), false);
+                            }
+                        }
+                    }
+                })
+                .addOnFailureListener(e -> {
+                    if (isAdded()) {
+                        Toast.makeText(getContext(), isEnglish ? "Error loading data" : "Ошибка загрузки данных", Toast.LENGTH_SHORT).show();
+                    }
+                });
     }
 
     private void saveAndExit(View v) {
+        if (currentUid == null) return;
+
+        String firstName = etFirst.getText().toString().trim();
+        String lastName = etLast.getText().toString().trim();
+        String height = etHeight.getText().toString().trim();
+        String weight = etWeight.getText().toString().trim();
         String styleDisplay = spinStyle.getText().toString();
         String countryDisplay = spinNation.getText().toString();
-
 
         int selectedStylePos = -1;
         for (int i = 0; i < styleDisplayNames.length; i++) {
@@ -148,34 +182,52 @@ public class EditProfileFragment extends Fragment {
             }
         }
 
-
         int selectedCountryPos = countryDisplayNames.indexOf(countryDisplay);
 
         String styleKeyToSave = (selectedStylePos >= 0) ? styleKeys[selectedStylePos] : "freestyle";
         String countryIsoToSave = (selectedCountryPos >= 0) ? countryIsoKeys.get(selectedCountryPos) : "";
 
-        SharedPreferences.Editor editor = prefs.edit()
-                .putString("firstName", etFirst.getText().toString())
-                .putString("lastName", etLast.getText().toString())
-                .putString("height", etHeight.getText().toString())
-                .putString("weight", etWeight.getText().toString())
-                .putString("style_key", styleKeyToSave)
-                .putString("nation_iso", countryIsoToSave)
-                .putString("style", styleDisplay)
-                .putString("nation", countryDisplay);
+        Map<String, Object> userUpdates = new HashMap<>();
+        userUpdates.put("firstName", firstName);
+        userUpdates.put("lastName", lastName);
+        userUpdates.put("height", height);
+        userUpdates.put("weight", weight);
+        userUpdates.put("style_key", styleKeyToSave);
+        userUpdates.put("nation_iso", countryIsoToSave);
+        userUpdates.put("style", styleDisplay);
+        userUpdates.put("nation", countryDisplay);
 
         String enteredAchievements = etAchievements.getText().toString();
         if (isEnglish) {
-            editor.putString("achievements_en", enteredAchievements);
+            userUpdates.put("achievements_en", enteredAchievements);
         } else {
-            editor.putString("achievements_ru", enteredAchievements);
+            userUpdates.put("achievements_ru", enteredAchievements);
         }
 
-        editor.apply();
+        db.collection("users").document(currentUid)
+                .set(userUpdates, com.google.firebase.firestore.SetOptions.merge())
+                .addOnSuccessListener(aVoid -> {
+                    if (isAdded()) {
+                        SharedPreferences.Editor editor = prefs.edit();
+                        editor.putString("firstName", firstName);
+                        editor.putString("lastName", lastName);
+                        editor.putString("height", height);
+                        editor.putString("weight", weight);
+                        editor.putString("style", styleDisplay);
+                        editor.putString("nation", countryDisplay);
+                        editor.apply();
 
-        String message = isEnglish ? "Profile updated" : "Профиль обновлен";
-        Toast.makeText(getContext(), message, Toast.LENGTH_SHORT).show();
-        Navigation.findNavController(v).popBackStack();
+                        String message = isEnglish ? "Profile updated in cloud" : "Профиль обновлен в облаке";
+                        Toast.makeText(getContext(), message, Toast.LENGTH_SHORT).show();
+                        Navigation.findNavController(v).popBackStack();
+                    }
+                })
+                .addOnFailureListener(e -> {
+                    if (isAdded()) {
+                        String errorMsg = isEnglish ? "Save failed" : "Ошибка сохранения";
+                        Toast.makeText(getContext(), errorMsg, Toast.LENGTH_SHORT).show();
+                    }
+                });
     }
 
     private static class CountryItem {

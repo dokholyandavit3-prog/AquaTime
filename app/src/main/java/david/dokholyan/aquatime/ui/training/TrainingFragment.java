@@ -14,6 +14,7 @@ import android.os.Handler;
 import android.os.SystemClock;
 import android.provider.Settings;
 import android.text.TextUtils;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -22,14 +23,18 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AlertDialog;
 import androidx.fragment.app.Fragment;
+import com.google.android.gms.tasks.OnCompleteListener;
+import com.google.android.gms.tasks.Task;
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseUser;
+import com.google.firebase.firestore.DocumentSnapshot;
+import com.google.firebase.firestore.FirebaseFirestore;
+import com.google.firebase.firestore.QueryDocumentSnapshot;
+import com.google.firebase.firestore.SetOptions;
 import david.dokholyan.aquatime.R;
 import java.text.SimpleDateFormat;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Calendar;
-import java.util.Date;
-import java.util.Locale;
-import java.util.Random;
+import java.util.*;
+import java.util.concurrent.atomic.AtomicInteger;
 
 public class TrainingFragment extends Fragment {
     private TextView tvPageMainTitle;
@@ -45,15 +50,18 @@ public class TrainingFragment extends Fragment {
     private long startTime = 0L, updateTime = 0L, timeSwapBuff = 0L, timeInMilliseconds = 0L;
     private boolean running = false;
 
-    private int currentMode = 0; // 0 = Ready-made, 1 = Constructor
+    private int currentMode = 0;
     private SharedPreferences prefs;
-    private ArrayList<String> aiWarmupList = new ArrayList<>();
-    private ArrayList<String> aiMainList = new ArrayList<>();
-    private ArrayList<String> aiCooldownList = new ArrayList<>();
+    private FirebaseFirestore firestore;
+    private FirebaseAuth auth;
+
+    private ArrayList<String> aiWarmupList = new ArrayList();
+    private ArrayList<String> aiMainList = new ArrayList();
+    private ArrayList<String> aiCooldownList = new ArrayList();
     private int aiTotalDistance = 0;
-    private ArrayList<String> constWarmupList = new ArrayList<>();
-    private ArrayList<String> constMainList = new ArrayList<>();
-    private ArrayList<String> constCooldownList = new ArrayList<>();
+    private ArrayList<String> constWarmupList = new ArrayList();
+    private ArrayList<String> constMainList = new ArrayList();
+    private ArrayList<String> constCooldownList = new ArrayList();
     private int constTotalDistance = 0;
     private int lastAiDiff = 1;
     private String lastAiStyle = "Комплексный (Все стили)";
@@ -64,9 +72,18 @@ public class TrainingFragment extends Fragment {
         View view = inflater.inflate(R.layout.fragment_training, container, false);
         prefs = requireActivity().getSharedPreferences("AquaTime", Context.MODE_PRIVATE);
 
+        firestore = FirebaseFirestore.getInstance();
+        auth = FirebaseAuth.getInstance();
+
         initViews(view);
         setupStylesSpinner();
         showRandomTip();
+
+        if (auth.getCurrentUser() != null) {
+            loadUserDataFromFirestore();
+        } else {
+            restoreScreenState();
+        }
 
         if (btnModeAi != null) btnModeAi.setOnClickListener(v -> switchMode(0));
         if (btnModeConstructor != null) btnModeConstructor.setOnClickListener(v -> switchMode(1));
@@ -89,14 +106,12 @@ public class TrainingFragment extends Fragment {
         btnTimerReset.setOnClickListener(v -> resetTimer());
         btnSaveWorkoutResults.setOnClickListener(v -> saveWorkoutResults());
 
-        restoreScreenState();
         requestNotificationPermission();
 
         return view;
     }
 
     private void initViews(View v) {
-
         tvPageMainTitle = v.findViewById(R.id.tv_page_main_title);
         if (tvPageMainTitle != null) {
             tvPageMainTitle.setText(isEnglish() ? "Training" : "Тренировка");
@@ -136,6 +151,371 @@ public class TrainingFragment extends Fragment {
 
         spinnerStyles = v.findViewById(R.id.spinner_styles);
     }
+
+    private void loadUserDataFromFirestore() {
+        FirebaseUser user = auth.getCurrentUser();
+        if (user == null) return;
+
+        firestore.collection("users").document(user.getUid())
+                .get()
+                .addOnCompleteListener(task -> {
+                    if (task.isSuccessful() && task.getResult() != null) {
+                        DocumentSnapshot document = task.getResult();
+                        if (document.exists()) {
+                            if (document.contains("total_meters")) {
+                                prefs.edit().putInt("total_meters", document.getLong("total_meters").intValue()).apply();
+                            }
+                            if (document.contains("trainings_count")) {
+                                prefs.edit().putInt("trainings_count", document.getLong("trainings_count").intValue()).apply();
+                            }
+                            if (document.contains("weekly_meters")) {
+                                prefs.edit().putInt("weekly_meters", document.getLong("weekly_meters").intValue()).apply();
+                            }
+                            if (document.contains("all_res")) {
+                                prefs.edit().putString("all_res", document.getString("all_res")).apply();
+                            }
+                            if (document.contains("stopwatch_log")) {
+                                prefs.edit().putString("stopwatch_log", document.getString("stopwatch_log")).apply();
+                            }
+                            if (document.contains("planner")) {
+                                prefs.edit().putString("planner", document.getString("planner")).apply();
+                            }
+
+                            // Load personal records
+                            for (int i = 0; i < 5; i++) {
+                                String recordKey = "best_style_" + i;
+                                if (document.contains(recordKey)) {
+                                    prefs.edit().putString(recordKey, document.getString(recordKey)).apply();
+                                }
+                            }
+                        }
+                    }
+
+                    restoreScreenState();
+                });
+    }
+
+
+    private void saveWorkoutResults() {
+        String time = tvTimer.getText().toString();
+        if (time.equals("00:00:00") || tvTimer == null) {
+            Toast.makeText(getContext(), isEnglish() ? "Start the timer!" : "Запустите таймер!", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        String selectedStyle = (spinnerStyles != null) ? spinnerStyles.getSelectedItem().toString() : (isEnglish() ? "50m Freestyle" : "50м Вольный стиль");
+
+
+        int sessionMeters = (currentMode == 0) ? aiTotalDistance : constTotalDistance;
+        if (sessionMeters == 0) {
+            sessionMeters = parseMetersFromStyleString(selectedStyle);
+        }
+
+        String[] timeParts = time.split(":");
+        String formattedTime = timeParts[0] + ":" + timeParts[1];
+        String fullDateStr = new SimpleDateFormat("dd.MM.yyyy", Locale.getDefault()).format(new Date());
+
+        saveGlobalWorkoutData(sessionMeters, formattedTime, fullDateStr, selectedStyle);
+        checkAndUpgradePersonalRecord(selectedStyle, time);
+        saveToStopwatchLog(selectedStyle, time, fullDateStr);
+
+        Toast.makeText(getContext(), isEnglish() ? "Result saved! 🌊" : "Результат сохранен! 🌊", Toast.LENGTH_SHORT).show();
+        resetTimer();
+        switchMode(currentMode);
+    }
+
+
+    private int parseMetersFromStyleString(String styleName) {
+        try {
+
+            String numericOnly = styleName.replaceAll("[^0-9]", "").trim();
+            if (!numericOnly.isEmpty()) {
+                return Integer.parseInt(numericOnly);
+            }
+        } catch (Exception e) {
+            Log.e("AquaTime", "Ошибка парсинга метров из спиннера", e);
+        }
+        return 50;
+    }
+
+    private void saveToStopwatchLog(String style, String time, String date) {
+        String entry = style + "|" + time + "|" + date;
+        String currentLog = prefs.getString("stopwatch_log", "");
+        String updatedLog;
+
+        if (currentLog.isEmpty()) {
+            updatedLog = entry;
+        } else {
+            updatedLog = entry + ";" + currentLog;
+        }
+
+        prefs.edit().putString("stopwatch_log", updatedLog).apply();
+
+        // Save to Firestore
+        FirebaseUser user = auth.getCurrentUser();
+        if (user != null) {
+            String userId = user.getUid();
+            Map<String, Object> updates = new HashMap<>();
+            updates.put("stopwatch_log", updatedLog);
+
+            firestore.collection("users").document(userId)
+                    .set(updates, SetOptions.merge())
+                    .addOnFailureListener(e ->
+                            Toast.makeText(getContext(), "Failed to sync: " + e.getMessage(), Toast.LENGTH_SHORT).show());
+        }
+    }
+
+
+    private void checkAndUpgradePersonalRecord(String fullStyleName, String currentTimeStr) {
+        int styleIdx = -1;
+        String lowerStyle = fullStyleName.toLowerCase();
+
+        if (lowerStyle.contains("50м вольный") || lowerStyle.contains("50m freestyle")) styleIdx = 0;
+        else if (lowerStyle.contains("50м брасс") || lowerStyle.contains("50m breaststroke")) styleIdx = 1;
+        else if (lowerStyle.contains("50м на спине") || lowerStyle.contains("50m backstroke")) styleIdx = 2;
+        else if (lowerStyle.contains("50м баттерфляй") || lowerStyle.contains("50m butterfly")) styleIdx = 3;
+        else if (lowerStyle.contains("100м комплекс") || lowerStyle.contains("100m individual medley")) styleIdx = 4;
+
+        if (styleIdx == -1) return;
+
+        String prefKey = "best_style_" + styleIdx;
+        String savedBestTime = prefs.getString(prefKey, "99:99:99");
+
+        double currentSec = parseTimeToSecondsInternal(currentTimeStr);
+        double bestSec = parseTimeToSecondsInternal(savedBestTime);
+
+        if (currentSec > 0 && currentSec < bestSec) {
+            prefs.edit().putString(prefKey, currentTimeStr).apply();
+
+
+            FirebaseUser user = auth.getCurrentUser();
+            if (user != null) {
+                Map<String, Object> updates = new HashMap<>();
+                updates.put(prefKey, currentTimeStr);
+                firestore.collection("users").document(user.getUid())
+                        .set(updates, SetOptions.merge());
+            }
+
+            String message = isEnglish() ?
+                    "🎉 New Personal Record! 🎉\n" + fullStyleName + ": " + currentTimeStr :
+                    "🎉 Новый личный рекорд! 🎉\n" + fullStyleName + ": " + currentTimeStr;
+            Toast.makeText(getContext(), message, Toast.LENGTH_LONG).show();
+        }
+    }
+
+
+    private void saveGlobalWorkoutData(int distance, String timeStr, String dateStr, String style) {
+        int currentTotalMeters = prefs.getInt("total_meters", 0);
+        int currentTrainingsCount = prefs.getInt("trainings_count", 0);
+        int currentWeeklyMeters = prefs.getInt("weekly_meters", 0);
+
+        String historyEntry = distance + " | " + timeStr + " | " + dateStr + " | " + style;
+        String oldHistory = prefs.getString("all_res", "");
+        String updatedHistory = oldHistory.isEmpty() ? historyEntry : historyEntry + ";" + oldHistory;
+
+        int newTotalMeters = currentTotalMeters + distance;
+        int newTrainingsCount = currentTrainingsCount + 1;
+        int newWeeklyMeters = currentWeeklyMeters + distance;
+
+        SharedPreferences.Editor editor = prefs.edit();
+        editor.putString("all_res", updatedHistory);
+        editor.putInt("total_meters", newTotalMeters);
+        editor.putInt("trainings_count", newTrainingsCount);
+        editor.putInt("weekly_meters", newWeeklyMeters);
+        editor.putInt("last_completed_distance", distance);
+        editor.putString("last_completed_time", timeStr);
+        editor.putString("last_completed_date", dateStr);
+        editor.putString("last_completed_style", style);
+        editor.apply();
+
+
+        if (getContext() != null) {
+            Intent intent = new Intent("david.dokholyan.aquatime.ACTION_WORKOUT_SAVED");
+            androidx.localbroadcastmanager.content.LocalBroadcastManager.getInstance(getContext()).sendBroadcast(intent);
+        }
+
+        FirebaseUser user = auth.getCurrentUser();
+        if (user != null) {
+            String userId = user.getUid();
+
+            Map<String, Object> workoutData = new HashMap<>();
+            workoutData.put("distance", distance);
+            workoutData.put("time", timeStr);
+            workoutData.put("date", dateStr);
+            workoutData.put("style", style);
+            workoutData.put("timestamp", System.currentTimeMillis());
+
+            firestore.collection("users")
+                    .document(userId)
+                    .collection("workouts")
+                    .add(workoutData);
+
+            Map<String, Object> statsUpdate = new HashMap<>();
+            statsUpdate.put("total_meters", newTotalMeters);
+            statsUpdate.put("trainings_count", newTrainingsCount);
+            statsUpdate.put("weekly_meters", newWeeklyMeters);
+            statsUpdate.put("all_res", updatedHistory);
+
+            statsUpdate.put("last_completed_distance", distance);
+            statsUpdate.put("last_completed_time", timeStr);
+            statsUpdate.put("last_completed_date", dateStr);
+            statsUpdate.put("last_completed_style", style);
+            statsUpdate.put("last_workout_date", dateStr);
+
+            firestore.collection("users").document(userId)
+                    .set(statsUpdate, SetOptions.merge())
+                    .addOnSuccessListener(aVoid -> {
+                        if (getContext() != null) {
+                            Toast.makeText(getContext(), isEnglish() ? "Cloud Synchronized ☁️" : "Облако синхронизировано ☁️", Toast.LENGTH_SHORT).show();
+                        }
+                    })
+                    .addOnFailureListener(e -> {
+                        if (getContext() != null) {
+                            Toast.makeText(getContext(), "Sync failed: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+                        }
+                    });
+        }
+    }
+    private void addToPlanner(String planGoalText) {
+        String currentPlannerData = prefs.getString("planner", "").trim();
+        String emptyGoalsText = isEnglish() ? "No goals planned" : "Нет запланированных целей";
+
+        String updatedPlannerData = (currentPlannerData.isEmpty() || currentPlannerData.equals(emptyGoalsText))
+                ? "• " + planGoalText : currentPlannerData + "\n• " + planGoalText;
+
+        prefs.edit().putString("planner", updatedPlannerData).apply();
+
+        FirebaseUser user = auth.getCurrentUser();
+        if (user != null) {
+            Map<String, Object> plannerUpdate = new HashMap<>();
+            plannerUpdate.put("planner", updatedPlannerData);
+            firestore.collection("users").document(user.getUid())
+                    .set(plannerUpdate, SetOptions.merge());
+        }
+    }
+
+    private void removeCalendarPlanAfterExecution(int distance) {
+        String currentPlannerData = prefs.getString("planner", "").trim();
+        String emptyGoalsText = isEnglish() ? "No goals planned" : "Нет запланированных целей";
+        if (currentPlannerData.isEmpty() || currentPlannerData.equals(emptyGoalsText)) return;
+
+        String[] lines = currentPlannerData.split("\n");
+        StringBuilder updatedPlanner = new StringBuilder();
+        boolean removed = false;
+
+        String targetSearchRu = "Заплыв на " + distance + " м";
+        String targetSearchEn = "Swim for " + distance + " m";
+
+        for (String line : lines) {
+            if (!removed && (line.contains(targetSearchRu) || line.contains(targetSearchEn))) {
+                removed = true;
+                continue;
+            }
+            if (updatedPlanner.length() > 0) updatedPlanner.append("\n");
+            updatedPlanner.append(line);
+        }
+
+        String result = updatedPlanner.toString().trim();
+        if (result.isEmpty()) result = emptyGoalsText;
+        prefs.edit().putString("planner", result).apply();
+
+        FirebaseUser user = auth.getCurrentUser();
+        if (user != null) {
+            Map<String, Object> plannerUpdate = new HashMap<>();
+            plannerUpdate.put("planner", result);
+            firestore.collection("users").document(user.getUid())
+                    .set(plannerUpdate, SetOptions.merge());
+        }
+    }
+
+    private void saveScreenState() {
+        SharedPreferences.Editor editor = prefs.edit();
+        editor.putInt("ai_total_dist", aiTotalDistance);
+        editor.putString("ai_wu", TextUtils.join(";", aiWarmupList));
+        editor.putString("ai_main", TextUtils.join(";", aiMainList));
+        editor.putString("ai_cd", TextUtils.join(";", aiCooldownList));
+
+        editor.putInt("const_total_dist", constTotalDistance);
+        editor.putString("const_wu", TextUtils.join(";", constWarmupList));
+        editor.putString("const_main", TextUtils.join(";", constMainList));
+        editor.putString("const_cd", TextUtils.join(";", constCooldownList));
+
+        editor.putInt("last_ai_diff", lastAiDiff);
+        editor.putString("last_ai_style", lastAiStyle);
+        editor.apply();
+
+        FirebaseUser user = auth.getCurrentUser();
+        if (user != null && aiTotalDistance > 0) {
+            Map<String, Object> planData = new HashMap<>();
+            planData.put("ai_total_dist", aiTotalDistance);
+            planData.put("ai_wu", aiWarmupList);
+            planData.put("ai_main", aiMainList);
+            planData.put("ai_cd", aiCooldownList);
+            planData.put("last_ai_diff", lastAiDiff);
+            planData.put("last_ai_style", lastAiStyle);
+            planData.put("last_updated", System.currentTimeMillis());
+
+            firestore.collection("users").document(user.getUid())
+                    .collection("training_plans")
+                    .document("current_plan")
+                    .set(planData, SetOptions.merge());
+        }
+    }
+
+    private void setupAlarms(Calendar targetTime, int minutesBefore, int distance) {
+        Context context = getContext();
+        if (context == null) return;
+
+        AlarmManager alarmManager = (AlarmManager) context.getSystemService(Context.ALARM_SERVICE);
+        if (alarmManager == null) return;
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            if (!alarmManager.canScheduleExactAlarms()) {
+                Intent intent = new Intent(Settings.ACTION_REQUEST_SCHEDULE_EXACT_ALARM);
+                startActivity(intent);
+                return;
+            }
+        }
+
+
+        String formattedDate = String.format(Locale.getDefault(), "%02d.%02d.%04d",
+                targetTime.get(Calendar.DAY_OF_MONTH), targetTime.get(Calendar.MONTH) + 1, targetTime.get(Calendar.YEAR));
+
+        String planGoalText = isEnglish() ?
+                "Swim for " + distance + " m (" + formattedDate + ")" :
+                "Заплыв на " + distance + " м (" + formattedDate + ")";
+
+        addToPlanner(planGoalText);
+
+        FirebaseUser user = auth.getCurrentUser();
+        if (user != null) {
+            Map<String, Object> scheduledWorkout = new HashMap<>();
+            scheduledWorkout.put("distance", distance);
+            scheduledWorkout.put("date", formattedDate);
+            scheduledWorkout.put("time", String.format("%02d:%02d", targetTime.get(Calendar.HOUR_OF_DAY), targetTime.get(Calendar.MINUTE)));
+            scheduledWorkout.put("minutes_before", minutesBefore);
+            scheduledWorkout.put("timestamp", targetTime.getTimeInMillis());
+
+            firestore.collection("users")
+                    .document(user.getUid())
+                    .collection("scheduled_workouts")
+                    .add(scheduledWorkout);
+        }
+
+        Toast.makeText(context, isEnglish() ? "Workout successfully scheduled! 📅" : "Тренировка успешно запланирована! 📅", Toast.LENGTH_LONG).show();
+    }
+
+    private double parseTimeToSecondsInternal(String timeStr) {
+        try {
+            if (timeStr.equals("00:00:00") || timeStr.equals("99:99:99")) return 9999.0;
+            String[] parts = timeStr.split(":");
+            int min = Integer.parseInt(parts[0]);
+            int sec = Integer.parseInt(parts[1]);
+            int ms = Integer.parseInt(parts[2]);
+            return min * 60 + sec + ms / 100.0;
+        } catch (Exception e) { return 9999.0; }
+    }
+
 
     private boolean isEnglish() {
         return Locale.getDefault().getLanguage().equalsIgnoreCase("en");
@@ -210,11 +590,9 @@ public class TrainingFragment extends Fragment {
 
         boolean en = isEnglish();
 
-
         if (tvLabelWarmup != null) tvLabelWarmup.setText(en ? "🏁 WARM-UP" : "🏁 РАЗМИНКА (WARM-UP)");
         if (tvLabelMain != null) tvLabelMain.setText(en ? "🏊‍♂️ MAIN SET" : "🏊‍♂️ ОСНОВНАЯ СЕРИЯ (MAIN SET)");
         if (tvLabelCooldown != null) tvLabelCooldown.setText(en ? "🛑 COOL-DOWN" : "🛑 ЗАМИНКА (COOL-DOWN)");
-
 
         if (btnScheduleWorkout != null) btnScheduleWorkout.setText(en ? "Schedule 📅" : "Запланировать 📅");
         if (btnCompleteNow != null) btnCompleteNow.setText(en ? "Complete Now! ✅" : "Выполнить сейчас! ✅");
@@ -233,6 +611,7 @@ public class TrainingFragment extends Fragment {
             toggleActionButtons(constTotalDistance > 0);
         }
     }
+
     private void toggleActionButtons(boolean show) {
         int visibility = show ? View.VISIBLE : View.GONE;
         if (btnScheduleWorkout != null) btnScheduleWorkout.setVisibility(visibility);
@@ -413,204 +792,6 @@ public class TrainingFragment extends Fragment {
         switchMode(currentMode);
     }
 
-    private void saveWorkoutResults() {
-        String time = tvTimer.getText().toString();
-        if (time.equals("00:00:00") || tvTimer == null) {
-            Toast.makeText(getContext(), isEnglish() ? "Start the timer!" : "Запустите таймер!", Toast.LENGTH_SHORT).show();
-            return;
-        }
-
-        int sessionMeters = (currentMode == 0) ? (aiTotalDistance > 0 ? aiTotalDistance : 500) : (constTotalDistance > 0 ? constTotalDistance : 500);
-
-        String[] timeParts = time.split(":");
-        String formattedTime = timeParts[0] + ":" + timeParts[1];
-        String fullDateStr = new SimpleDateFormat("dd.MM.yyyy", Locale.getDefault()).format(new Date());
-
-        String selectedStyle = (spinnerStyles != null) ? spinnerStyles.getSelectedItem().toString() : (isEnglish() ? "Freestyle" : "Вольный стиль");
-
-        saveGlobalWorkoutData(sessionMeters, formattedTime, fullDateStr, selectedStyle);
-        checkAndUpgradePersonalRecord(selectedStyle, time);
-        saveToStopwatchLog(selectedStyle, time, fullDateStr);
-
-        Toast.makeText(getContext(), isEnglish() ? "Result saved! 🌊" : "Результат сохранен! 🌊", Toast.LENGTH_SHORT).show();
-        resetTimer();
-        switchMode(currentMode);
-    }
-
-    private void saveToStopwatchLog(String style, String time, String date) {
-        String entry = style + "|" + time + "|" + date;
-        String currentLog = prefs.getString("stopwatch_log", "");
-        String updatedLog;
-
-        if (currentLog.isEmpty()) {
-            updatedLog = entry;
-        } else {
-            updatedLog = entry + ";" + currentLog;
-        }
-
-        prefs.edit().putString("stopwatch_log", updatedLog).apply();
-
-        com.google.firebase.auth.FirebaseUser user = com.google.firebase.auth.FirebaseAuth.getInstance().getCurrentUser();
-        if (user != null) {
-            String userId = user.getUid();
-            com.google.firebase.database.FirebaseDatabase.getInstance().getReference("users")
-                    .child(userId).child("stopwatch_log").setValue(updatedLog);
-        }
-    }
-
-    private void checkAndUpgradePersonalRecord(String fullStyleName, String currentTimeStr) {
-        int styleIdx = -1;
-        String lowerStyle = fullStyleName.toLowerCase();
-
-        if (lowerStyle.contains("50м вольный") || lowerStyle.contains("50m freestyle")) styleIdx = 0;
-        else if (lowerStyle.contains("50м брасс") || lowerStyle.contains("50m breaststroke")) styleIdx = 1;
-        else if (lowerStyle.contains("50м на спине") || lowerStyle.contains("50m backstroke")) styleIdx = 2;
-        else if (lowerStyle.contains("50м баттерфляй") || lowerStyle.contains("50m butterfly")) styleIdx = 3;
-        else if (lowerStyle.contains("100м комплекс") || lowerStyle.contains("100m individual medley")) styleIdx = 4;
-
-        if (styleIdx == -1) return;
-
-        String prefKey = "best_style_" + styleIdx;
-        String savedBestTime = prefs.getString(prefKey, "99:99:99");
-
-        double currentSec = parseTimeToSecondsInternal(currentTimeStr);
-        double bestSec = parseTimeToSecondsInternal(savedBestTime);
-
-        if (currentSec < bestSec) {
-            prefs.edit().putString(prefKey, currentTimeStr).apply();
-        }
-
-        String currentPlannerData = prefs.getString("planner", "").trim();
-        String emptyGoalsText = isEnglish() ? "No goals planned" : "Нет запланированных целей";
-        if (currentPlannerData.isEmpty() || currentPlannerData.equals(emptyGoalsText)) return;
-
-        String[] lines = currentPlannerData.split("\n");
-        StringBuilder updatedPlanner = new StringBuilder();
-        boolean objectiveCleared = false;
-
-        String shortStyle = fullStyleName.replace("50м ", "").replace("100м ", "")
-                .replace("50m ", "").replace("100m ", "").toLowerCase();
-
-        for (String line : lines) {
-            String lowerLine = line.toLowerCase();
-
-            boolean matchStyle = lowerLine.contains(shortStyle) ||
-                    (shortStyle.contains("вольный") && lowerLine.contains("кроль")) ||
-                    (shortStyle.contains("freestyle") && lowerLine.contains("crawl"));
-
-            if (!objectiveCleared && matchStyle) {
-                String cleanLine = lowerLine.replaceAll("[^0-9]", " ").trim();
-                String[] tokens = cleanLine.split("\\s+");
-                int targetSeconds = -1;
-
-                for (String token : tokens) {
-                    if (!token.isEmpty() && token.length() <= 3) {
-                        targetSeconds = Integer.parseInt(token);
-                        break;
-                    }
-                }
-
-                if (targetSeconds > 0 && currentSec <= targetSeconds) {
-                    objectiveCleared = true;
-                    if (getContext() != null) {
-                        String goalMsg = isEnglish() ? "🎉 Goal '" + line.substring(2) + "' achieved!" : "🎉 Цель '" + line.substring(2) + "' достигнута!";
-                        Toast.makeText(getContext(), goalMsg, Toast.LENGTH_LONG).show();
-                    }
-                    continue;
-                }
-            }
-
-            if (updatedPlanner.length() > 0) updatedPlanner.append("\n");
-            updatedPlanner.append(line);
-        }
-
-        String result = updatedPlanner.toString().trim();
-        if (result.isEmpty()) result = emptyGoalsText;
-        prefs.edit().putString("planner", result).apply();
-    }
-
-    private void removeCalendarPlanAfterExecution(int distance) {
-        String currentPlannerData = prefs.getString("planner", "").trim();
-        String emptyGoalsText = isEnglish() ? "No goals planned" : "Нет запланированных целей";
-        if (currentPlannerData.isEmpty() || currentPlannerData.equals(emptyGoalsText)) return;
-
-        String[] lines = currentPlannerData.split("\n");
-        StringBuilder updatedPlanner = new StringBuilder();
-        boolean removed = false;
-
-        String targetSearchRu = "Заплыв на " + distance + " м";
-        String targetSearchEn = "Swim for " + distance + " m";
-
-        for (String line : lines) {
-            if (!removed && (line.contains(targetSearchRu) || line.contains(targetSearchEn))) {
-                removed = true;
-                continue;
-            }
-            if (updatedPlanner.length() > 0) updatedPlanner.append("\n");
-            updatedPlanner.append(line);
-        }
-
-        String result = updatedPlanner.toString().trim();
-        if (result.isEmpty()) result = emptyGoalsText;
-        prefs.edit().putString("planner", result).apply();
-    }
-
-    private double parseTimeToSecondsInternal(String timeStr) {
-        try {
-            if (timeStr.equals("00:00:00") || timeStr.equals("99:99:99")) return 9999.0;
-            String[] parts = timeStr.split(":");
-            int min = Integer.parseInt(parts[0]);
-            int sec = Integer.parseInt(parts[1]);
-            int ms = Integer.parseInt(parts[2]);
-            return min * 60 + sec + ms / 100.0;
-        } catch (Exception e) { return 9999.0; }
-    }
-
-    private void saveGlobalWorkoutData(int distance, String timeStr, String dateStr, String style) {
-        int currentTotalMeters = prefs.getInt("total_meters", 0);
-        int currentTrainingsCount = prefs.getInt("trainings_count", 0);
-        int currentWeeklyMeters = prefs.getInt("weekly_meters", 0);
-
-        String historyEntry = distance + " | " + timeStr + " | " + dateStr;
-        String oldHistory = prefs.getString("all_res", "");
-        String updatedHistory = oldHistory.isEmpty() ? historyEntry : historyEntry + ";" + oldHistory;
-
-        int newTotalMeters = currentTotalMeters + distance;
-        int newTrainingsCount = currentTrainingsCount + 1;
-        int newWeeklyMeters = currentWeeklyMeters + distance;
-
-        SharedPreferences.Editor editor = prefs.edit();
-        editor.putString("all_res", updatedHistory);
-        editor.putInt("total_meters", newTotalMeters);
-        editor.putInt("trainings_count", newTrainingsCount);
-        editor.putInt("weekly_meters", newWeeklyMeters);
-
-        editor.putInt("last_completed_distance", distance);
-        editor.putString("last_completed_time", timeStr);
-        editor.putString("last_completed_date", dateStr);
-        editor.putString("last_completed_style", style);
-        editor.apply();
-
-        com.google.firebase.auth.FirebaseUser user = com.google.firebase.auth.FirebaseAuth.getInstance().getCurrentUser();
-        if (user != null) {
-            String userId = user.getUid();
-            com.google.firebase.database.DatabaseReference dbRef =
-                    com.google.firebase.database.FirebaseDatabase.getInstance().getReference("users").child(userId);
-
-            java.util.HashMap<String, Object> cloudUpdates = new java.util.HashMap<>();
-            cloudUpdates.put("all_res", updatedHistory);
-            cloudUpdates.put("total_meters", newTotalMeters);
-            cloudUpdates.put("trainings_count", newTrainingsCount);
-            cloudUpdates.put("weekly_meters", newWeeklyMeters);
-
-            dbRef.updateChildren(cloudUpdates).addOnCompleteListener(task -> {
-                if (task.isSuccessful() && getContext() != null) {
-                    Toast.makeText(getContext(), isEnglish() ? "Cloud Synchronized ☁️" : "Облако синхронизировано ☁️", Toast.LENGTH_SHORT).show();
-                }
-            });
-        }
-    }
-
     private void showAiPreferencesDialog() {
         AlertDialog.Builder builder = new AlertDialog.Builder(requireContext());
         builder.setTitle(isEnglish() ? "Workout Settings" : "Настройка тренировки");
@@ -706,23 +887,6 @@ public class TrainingFragment extends Fragment {
         tv.setText(sb.toString().trim());
     }
 
-    private void saveScreenState() {
-        SharedPreferences.Editor editor = prefs.edit();
-        editor.putInt("ai_total_dist", aiTotalDistance);
-        editor.putString("ai_wu", TextUtils.join(";", aiWarmupList));
-        editor.putString("ai_main", TextUtils.join(";", aiMainList));
-        editor.putString("ai_cd", TextUtils.join(";", aiCooldownList));
-
-        editor.putInt("const_total_dist", constTotalDistance);
-        editor.putString("const_wu", TextUtils.join(";", constWarmupList));
-        editor.putString("const_main", TextUtils.join(";", constMainList));
-        editor.putString("const_cd", TextUtils.join(";", constCooldownList));
-
-        editor.putInt("last_ai_diff", lastAiDiff);
-        editor.putString("last_ai_style", lastAiStyle);
-        editor.apply();
-    }
-
     private void restoreScreenState() {
         int mode = prefs.getInt("saved_mode", 0);
         lastAiDiff = prefs.getInt("last_ai_diff", 1);
@@ -788,74 +952,6 @@ public class TrainingFragment extends Fragment {
         datePickerDialog.show();
     }
 
-    private void setupAlarms(Calendar targetTime, int minutesBefore, int distance) {
-        Context context = getContext();
-        if (context == null) return;
-
-        AlarmManager alarmManager = (AlarmManager) context.getSystemService(Context.ALARM_SERVICE);
-        if (alarmManager == null) return;
-
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-            if (!alarmManager.canScheduleExactAlarms()) {
-                Intent intent = new Intent(Settings.ACTION_REQUEST_SCHEDULE_EXACT_ALARM);
-                startActivity(intent);
-                return;
-            }
-        }
-
-        Calendar timeStartAlarm = (Calendar) targetTime.clone();
-        timeStartAlarm.add(Calendar.MINUTE, -minutesBefore);
-
-        Intent intentStart = new Intent(context, TrainingReminderReceiver.class);
-        intentStart.setAction("david.dokholyan.aquatime.START_TRAINING");
-        intentStart.putExtra("minutes_before", minutesBefore);
-        intentStart.putExtra("distance", distance);
-
-        PendingIntent pIntentStart = PendingIntent.getBroadcast(
-                context, 801, intentStart, PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
-
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-            alarmManager.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, timeStartAlarm.getTimeInMillis(), pIntentStart);
-        } else {
-            alarmManager.setExact(AlarmManager.RTC_WAKEUP, timeStartAlarm.getTimeInMillis(), pIntentStart);
-        }
-
-        int estimatedDurationMinutes = Math.max(60, ((distance / 50) * 45) / 60);
-
-        Calendar timeEndAlarm = (Calendar) targetTime.clone();
-        timeEndAlarm.add(Calendar.MINUTE, estimatedDurationMinutes);
-
-        Intent intentEnd = new Intent(context, TrainingReminderReceiver.class);
-        intentEnd.setAction("david.dokholyan.aquatime.END_TRAINING");
-        intentEnd.putExtra("distance", distance);
-
-        PendingIntent pIntentEnd = PendingIntent.getBroadcast(
-                context, 802, intentEnd, PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
-
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-            alarmManager.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, timeEndAlarm.getTimeInMillis(), pIntentEnd);
-        } else {
-            alarmManager.setExact(AlarmManager.RTC_WAKEUP, timeEndAlarm.getTimeInMillis(), pIntentEnd);
-        }
-
-        String formattedDate = String.format(Locale.getDefault(), "%02d.%02d.%04d",
-                targetTime.get(Calendar.DAY_OF_MONTH), targetTime.get(Calendar.MONTH) + 1, targetTime.get(Calendar.YEAR));
-
-        String planGoalText = isEnglish() ?
-                "Swim for " + distance + " m (" + formattedDate + ")" :
-                "Заплыв на " + distance + " м (" + formattedDate + ")";
-
-        String currentPlannerData = prefs.getString("planner", "").trim();
-        String emptyGoalsText = isEnglish() ? "No goals planned" : "Нет запланированных целей";
-
-        String updatedPlannerData = (currentPlannerData.isEmpty() || currentPlannerData.equals(emptyGoalsText))
-                ? "• " + planGoalText : currentPlannerData + "\n• " + planGoalText;
-
-        prefs.edit().putString("planner", updatedPlannerData).apply();
-
-        Toast.makeText(context, isEnglish() ? "Workout successfully scheduled! 📅" : "Тренировка успешно запланирована! 📅", Toast.LENGTH_LONG).show();
-    }
-
     private void requestNotificationPermission() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
             if (androidx.core.content.ContextCompat.checkSelfPermission(requireContext(),
@@ -869,7 +965,7 @@ public class TrainingFragment extends Fragment {
     private void stopTimer() { if (running) { timeSwapBuff += timeInMilliseconds; handler.removeCallbacks(timerRunnable); running = false; } }
     private void resetTimer() { stopTimer(); startTime = 0L; updateTime = 0L; timeSwapBuff = 0L; timeInMilliseconds = 0L; if (tvTimer != null) tvTimer.setText("00:00:00"); }
 
-    private Runnable timerRunnable = new Runnable() {
+    private final Runnable timerRunnable = new Runnable() {
         public void run() {
             timeInMilliseconds = SystemClock.uptimeMillis() - startTime;
             updateTime = timeSwapBuff + timeInMilliseconds;

@@ -2,8 +2,10 @@ package david.dokholyan.aquatime.ui.history;
 
 import android.app.AlertDialog;
 import android.content.Context;
+import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -14,13 +16,23 @@ import android.widget.Toast;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
+import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 
 import com.google.android.material.card.MaterialCardView;
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseUser;
+import com.google.firebase.firestore.FirebaseFirestore;
+import com.google.firebase.firestore.SetOptions;
+
 import david.dokholyan.aquatime.R;
 
+import java.util.HashMap;
 import java.util.Locale;
+import java.util.Map;
 
 public class HistoryFragment extends Fragment {
+
+    private static final String TAG = "AquaTimeHistory";
 
     private LinearLayout historyContainer, goalsContainer;
     private SharedPreferences prefs;
@@ -46,7 +58,6 @@ public class HistoryFragment extends Fragment {
         goalsContainer.removeAllViews();
         historyContainer.removeAllViews();
 
-
         String plannerData = prefs.getString("planner", "").trim();
         if (!plannerData.isEmpty() && !plannerData.equals(getString(R.string.planner_empty))) {
             String[] goals = plannerData.split("\n");
@@ -54,7 +65,6 @@ public class HistoryFragment extends Fragment {
                 final int index = i;
                 String goalText = goals[i].trim();
                 if (!goalText.isEmpty()) {
-
                     addCardToContainer(goalsContainer, goalText, view -> {
                         showDeleteDialog(index, goals, true);
                         return true;
@@ -64,7 +74,6 @@ public class HistoryFragment extends Fragment {
         } else {
             addEmptyMessage(goalsContainer, isEnglish() ? "No active goals." : "Нет активных целей.");
         }
-
 
         String historyData = prefs.getString("all_res", "");
         if (!historyData.isEmpty()) {
@@ -95,7 +104,6 @@ public class HistoryFragment extends Fragment {
         return rawData;
     }
 
-
     private void addCardToContainer(LinearLayout container, String text, View.OnLongClickListener longClickListener) {
         MaterialCardView card = new MaterialCardView(requireContext());
         LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(
@@ -117,7 +125,6 @@ public class HistoryFragment extends Fragment {
         card.setOnLongClickListener(longClickListener);
         container.addView(card);
     }
-
 
     private void addEmptyMessage(LinearLayout container, String message) {
         TextView tvEmpty = new TextView(getContext());
@@ -167,11 +174,15 @@ public class HistoryFragment extends Fragment {
 
         prefs.edit().putString("planner", updatedPlanner).apply();
 
-
-        com.google.firebase.auth.FirebaseUser user = com.google.firebase.auth.FirebaseAuth.getInstance().getCurrentUser();
+        FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
         if (user != null) {
-            com.google.firebase.database.FirebaseDatabase.getInstance().getReference("users")
-                    .child(user.getUid()).child("planner").setValue(updatedPlanner);
+            Map<String, Object> updateMap = new HashMap<>();
+            updateMap.put("planner", updatedPlanner);
+
+            FirebaseFirestore.getInstance().collection("users")
+                    .document(user.getUid())
+                    .set(updateMap, SetOptions.merge())
+                    .addOnFailureListener(e -> Log.e(TAG, "Ошибка удаления цели в Firestore", e));
         }
 
         loadData();
@@ -194,7 +205,6 @@ public class HistoryFragment extends Fragment {
             if (sb.length() > 0) sb.append(";");
             sb.append(records[i]);
 
-
             try {
                 String[] p = records[i].split("\\|");
                 int meters = Integer.parseInt(p[0].trim());
@@ -212,24 +222,66 @@ public class HistoryFragment extends Fragment {
         String updatedHistory = sb.toString();
         int newTrainingsCount = (updatedHistory.isEmpty()) ? 0 : updatedHistory.split(";").length;
 
-
         SharedPreferences.Editor editor = prefs.edit();
         editor.putString("all_res", updatedHistory);
         editor.putInt("total_meters", newTotalMeters);
         editor.putInt("trainings_count", newTrainingsCount);
         editor.putInt("weekly_meters", newWeeklyMeters);
+
+        Map<String, Object> updateMap = new HashMap<>();
+        updateMap.put("all_res", updatedHistory);
+        updateMap.put("total_meters", (long) newTotalMeters);
+        updateMap.put("trainings_count", (long) newTrainingsCount);
+        updateMap.put("weekly_meters", (long) newWeeklyMeters);
+
+        if (!updatedHistory.isEmpty()) {
+            try {
+                String[] remainingRecords = updatedHistory.split(";");
+                String[] lastParts = remainingRecords[0].split("\\|");
+
+                int lastDist = Integer.parseInt(lastParts[0].trim());
+                String lastTime = lastParts[1].trim();
+                String lastDate = lastParts[2].trim();
+                String lastStyle = lastParts[3].trim();
+
+                editor.putInt("last_completed_distance", lastDist);
+                editor.putString("last_completed_time", lastTime);
+                editor.putString("last_completed_date", lastDate);
+                editor.putString("last_completed_style", lastStyle);
+
+                updateMap.put("last_completed_distance", (long) lastDist);
+                updateMap.put("last_completed_time", lastTime);
+                updateMap.put("last_completed_date", lastDate);
+                updateMap.put("last_completed_style", lastStyle);
+                updateMap.put("last_workout_date", lastDate);
+            } catch (Exception e) {
+                Log.e(TAG, "Ошибка пересчета последней тренировки", e);
+            }
+        } else {
+            editor.putInt("last_completed_distance", 0);
+            editor.putString("last_completed_time", "--:--");
+            editor.putString("last_completed_date", "--.--.----");
+            editor.putString("last_completed_style", isEnglish() ? "None" : "Нет");
+
+            updateMap.put("last_completed_distance", 0L);
+            updateMap.put("last_completed_time", "--:--");
+            updateMap.put("last_completed_date", "--.--.----");
+            updateMap.put("last_completed_style", isEnglish() ? "None" : "Нет");
+            updateMap.put("last_workout_date", "");
+        }
         editor.apply();
 
-
-        com.google.firebase.auth.FirebaseUser user = com.google.firebase.auth.FirebaseAuth.getInstance().getCurrentUser();
+        FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
         if (user != null) {
-            com.google.firebase.database.DatabaseReference userRef = com.google.firebase.database.FirebaseDatabase.getInstance()
-                    .getReference("users").child(user.getUid());
+            FirebaseFirestore.getInstance().collection("users")
+                    .document(user.getUid())
+                    .set(updateMap, SetOptions.merge())
+                    .addOnFailureListener(e -> Log.e(TAG, "Ошибка обновления истории в Firestore", e));
+        }
 
-            userRef.child("all_res").setValue(updatedHistory);
-            userRef.child("total_meters").setValue(newTotalMeters);
-            userRef.child("trainings_count").setValue(newTrainingsCount);
-            userRef.child("weekly_meters").setValue(newWeeklyMeters);
+        if (getContext() != null) {
+            Intent intent = new Intent("david.dokholyan.aquatime.ACTION_WORKOUT_SAVED");
+            LocalBroadcastManager.getInstance(getContext()).sendBroadcast(intent);
         }
 
         loadData();

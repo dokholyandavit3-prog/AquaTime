@@ -28,12 +28,9 @@ public class SettingsFragment extends Fragment {
         View v = inflater.inflate(R.layout.fragment_settings, container, false);
         prefs = requireActivity().getSharedPreferences("AquaTime", Context.MODE_PRIVATE);
 
-
-        v.findViewById(R.id.btn_back).setOnClickListener(view -> {
-            if (getFragmentManager() != null) {
-                requireActivity().onBackPressed();
-            }
-        });
+        v.findViewById(R.id.btn_back).setOnClickListener(view ->
+                requireActivity().getOnBackPressedDispatcher().onBackPressed()
+        );
 
         v.findViewById(R.id.layout_theme).setOnClickListener(view -> showThemeSelectionDialog());
         v.findViewById(R.id.layout_language).setOnClickListener(view -> showLanguageSelectionDialog());
@@ -42,9 +39,11 @@ public class SettingsFragment extends Fragment {
     }
 
     private void showThemeSelectionDialog() {
-        String[] themes = {"Светлая", "Темная", "Системная"};
+        boolean isEn = isEnglish();
+        String[] themes = isEn ? new String[]{"Light", "Dark", "System"} : new String[]{"Светлая", "Темная", "Системная"};
+
         new AlertDialog.Builder(requireContext())
-                .setTitle("Выберите тему")
+                .setTitle(isEn ? "Select Theme" : "Выберите тему")
                 .setItems(themes, (dialog, which) -> {
                     int mode = (which == 0) ? AppCompatDelegate.MODE_NIGHT_NO :
                             (which == 1) ? AppCompatDelegate.MODE_NIGHT_YES :
@@ -56,9 +55,11 @@ public class SettingsFragment extends Fragment {
     }
 
     private void showLanguageSelectionDialog() {
+        boolean isEn = isEnglish();
         String[] languages = {"Русский", "English"};
+
         new AlertDialog.Builder(requireContext())
-                .setTitle("Select Language")
+                .setTitle(isEn ? "Select Language" : "Выберите язык")
                 .setItems(languages, (dialog, which) -> {
                     String lang = (which == 1) ? "en" : "ru";
                     updateResource(lang);
@@ -66,9 +67,7 @@ public class SettingsFragment extends Fragment {
     }
 
     private void updateResource(String langCode) {
-
         prefs.edit().putString("app_lang", langCode).apply();
-
 
         Locale locale = new Locale(langCode);
         Locale.setDefault(locale);
@@ -77,10 +76,13 @@ public class SettingsFragment extends Fragment {
         configuration.setLocale(locale);
         resources.updateConfiguration(configuration, resources.getDisplayMetrics());
 
-
         Intent intent = new Intent(requireActivity(), MainActivity.class);
-        intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_NEW_TASK);
+        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
         startActivity(intent);
         requireActivity().finish();
+    }
+
+    private boolean isEnglish() {
+        return prefs.getString("app_lang", "ru").equalsIgnoreCase("en");
     }
 }

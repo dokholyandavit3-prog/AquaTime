@@ -4,6 +4,8 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.res.Configuration;
+import android.net.ConnectivityManager;
+import android.net.NetworkCapabilities;
 import android.os.Bundle;
 import android.util.Log;
 import android.widget.Button;
@@ -15,16 +17,17 @@ import androidx.appcompat.app.AppCompatActivity;
 
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
-import com.google.firebase.database.DataSnapshot;
-import com.google.firebase.database.DatabaseReference;
-import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.firestore.DocumentSnapshot;
+import com.google.firebase.firestore.FirebaseFirestore;
+import com.google.firebase.firestore.SetOptions;
 
+import java.util.HashMap;
 import java.util.Locale;
+import java.util.Map;
 
 public class LoginActivity extends AppCompatActivity {
 
     private static final String TAG = "AquaTimeLogin";
-
 
     private static final String GUEST_EMAIL = "innovationcampus26@gmail.com";
     private static final String GUEST_PASSWORD = "Samsung2026";
@@ -34,7 +37,7 @@ public class LoginActivity extends AppCompatActivity {
     private TextView tvToRegister;
 
     private FirebaseAuth mAuth;
-    private DatabaseReference mDatabase;
+    private FirebaseFirestore mFirestore;
     private SharedPreferences prefs;
 
     @Override
@@ -46,7 +49,7 @@ public class LoginActivity extends AppCompatActivity {
         setContentView(R.layout.activity_login);
 
         mAuth = FirebaseAuth.getInstance();
-        mDatabase = FirebaseDatabase.getInstance().getReference();
+        mFirestore = FirebaseFirestore.getInstance();
 
         etEmail = findViewById(R.id.et_email);
         etPassword = findViewById(R.id.et_password);
@@ -54,16 +57,23 @@ public class LoginActivity extends AppCompatActivity {
         btnGuest = findViewById(R.id.btn_guest);
         tvToRegister = findViewById(R.id.tv_to_register);
 
-        tvToRegister.setOnClickListener(v -> finish());
-
+        tvToRegister.setOnClickListener(v -> {
+            Intent intent = new Intent(LoginActivity.this, RegisterActivity.class);
+            startActivity(intent);
+        });
 
         btnLogin.setOnClickListener(v -> {
-            String email = etEmail.getText().toString().trim();
-            String password = etPassword.getText().toString().trim();
             boolean isEn = isEnglish();
 
-            if (!email.isEmpty() && !password.isEmpty()) {
+            if (!isNetworkAvailable()) {
+                Toast.makeText(this, isEn ? "No internet connection. Please check your Wi-Fi or Mobile data." : "Нет подключения к интернету. Проверьте Wi-Fi или мобильную сеть.", Toast.LENGTH_LONG).show();
+                return;
+            }
 
+            String email = etEmail.getText().toString().trim();
+            String password = etPassword.getText().toString().trim();
+
+            if (!email.isEmpty() && !password.isEmpty()) {
                 prepareCacheBeforeLogin();
                 loginUser(email, password);
             } else {
@@ -71,12 +81,31 @@ public class LoginActivity extends AppCompatActivity {
             }
         });
 
-
         btnGuest.setOnClickListener(v -> {
+            boolean isEn = isEnglish();
+
+            if (!isNetworkAvailable()) {
+                Toast.makeText(this, isEn ? "Internet connection required for guest sync." : "Для гостевого входа и синхронизации нужен интернет.", Toast.LENGTH_LONG).show();
+                return;
+            }
+
             btnGuest.setEnabled(false);
             prepareCacheBeforeLogin();
             executeGuestFirebaseLogin();
         });
+    }
+
+    private boolean isNetworkAvailable() {
+        ConnectivityManager connectivityManager = (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
+        if (connectivityManager != null) {
+            NetworkCapabilities capabilities = connectivityManager.getNetworkCapabilities(connectivityManager.getActiveNetwork());
+            if (capabilities != null) {
+                return capabilities.hasTransport(NetworkCapabilities.TRANSPORT_WIFI) ||
+                        capabilities.hasTransport(NetworkCapabilities.TRANSPORT_CELLULAR) ||
+                        capabilities.hasTransport(NetworkCapabilities.TRANSPORT_ETHERNET);
+            }
+        }
+        return false;
     }
 
     private void prepareCacheBeforeLogin() {
@@ -109,7 +138,6 @@ public class LoginActivity extends AppCompatActivity {
                     if (task.isSuccessful()) {
                         FirebaseUser user = mAuth.getCurrentUser();
                         if (user != null) {
-
                             syncDataFromFirebaseAndNavigate(user.getUid(), false);
                         }
                     } else {
@@ -128,7 +156,6 @@ public class LoginActivity extends AppCompatActivity {
                     if (task.isSuccessful()) {
                         FirebaseUser user = mAuth.getCurrentUser();
                         if (user != null) {
-
                             syncDataFromFirebaseAndNavigate(user.getUid(), true);
                         }
                     } else {
@@ -156,21 +183,20 @@ public class LoginActivity extends AppCompatActivity {
                 });
     }
 
-
     private void syncDataFromFirebaseAndNavigate(String userId, boolean isGuestMode) {
         boolean isEn = isEnglish();
 
-        mDatabase.child("users").child(userId).get().addOnCompleteListener(task -> {
+        mFirestore.collection("users").document(userId).get().addOnCompleteListener(task -> {
             SharedPreferences.Editor editor = prefs.edit();
 
-            if (task.isSuccessful() && task.getResult().exists()) {
-                DataSnapshot snapshot = task.getResult();
+            if (task.isSuccessful() && task.getResult() != null && task.getResult().exists()) {
+                DocumentSnapshot snapshot = task.getResult();
+                Log.d(TAG, "Пользователь найден в Firestore! ID: " + userId);
 
-
-                String allRes = snapshot.child("all_res").getValue(String.class);
-                Long totalMeters = snapshot.child("total_meters").getValue(Long.class);
-                Long trainingsCount = snapshot.child("trainings_count").getValue(Long.class);
-                Long weeklyMeters = snapshot.child("weekly_meters").getValue(Long.class);
+                String allRes = snapshot.getString("all_res");
+                Long totalMeters = snapshot.getLong("total_meters");
+                Long trainingsCount = snapshot.getLong("trainings_count");
+                Long weeklyMeters = snapshot.getLong("weekly_meters");
 
                 if (allRes != null) editor.putString("all_res", allRes);
                 if (totalMeters != null) editor.putInt("total_meters", totalMeters.intValue());
@@ -178,35 +204,62 @@ public class LoginActivity extends AppCompatActivity {
                 if (weeklyMeters != null) editor.putInt("weekly_meters", weeklyMeters.intValue());
 
 
-                if (snapshot.hasChild("firstName")) editor.putString("firstName", snapshot.child("firstName").getValue(String.class));
-                if (snapshot.hasChild("lastName")) editor.putString("lastName", snapshot.child("lastName").getValue(String.class));
-                if (snapshot.hasChild("nation")) editor.putString("nation", snapshot.child("nation").getValue(String.class));
-                if (snapshot.hasChild("height")) editor.putString("height", snapshot.child("height").getValue(String.class));
-                if (snapshot.hasChild("weight")) editor.putString("weight", snapshot.child("weight").getValue(String.class));
-                if (snapshot.hasChild("style")) editor.putString("style", snapshot.child("style").getValue(String.class));
-
-            } else {
+                if (snapshot.contains("last_completed_distance")) {
+                    Long lastDist = snapshot.getLong("last_completed_distance");
+                    if (lastDist != null) editor.putInt("last_completed_distance", lastDist.intValue());
+                }
+                if (snapshot.contains("last_completed_time")) editor.putString("last_completed_time", snapshot.getString("last_completed_time"));
+                if (snapshot.contains("last_completed_date")) editor.putString("last_completed_date", snapshot.getString("last_completed_date"));
+                if (snapshot.contains("last_completed_style")) editor.putString("last_completed_style", snapshot.getString("last_completed_style"));
 
                 if (isGuestMode) {
-                    editor.putString("firstName", "Guest");
+                    Log.d(TAG, "Гостевой режим: принудительно ставим Test User");
+                    editor.putString("firstName", "Test User");
+                    editor.putString("lastName", "");
+                    saveGuestNameInFirestore(userId, "Test User");
+                } else {
+                    if (snapshot.contains("firstName")) editor.putString("firstName", snapshot.getString("firstName"));
+                    if (snapshot.contains("lastName")) editor.putString("lastName", snapshot.getString("lastName"));
+                }
+
+                if (snapshot.contains("nation")) editor.putString("nation", snapshot.getString("nation"));
+                if (snapshot.contains("height")) editor.putString("height", snapshot.getString("height"));
+                if (snapshot.contains("weight")) editor.putString("weight", snapshot.getString("weight"));
+                if (snapshot.contains("style")) editor.putString("style", snapshot.getString("style"));
+
+            } else {
+                Log.d(TAG, "Документ пользователя НЕ существует в Firestore или ошибка.");
+                if (isGuestMode) {
+                    editor.putString("firstName", "Test User");
+                    editor.putString("lastName", "");
                     editor.putString("nation", "");
+                    saveGuestNameInFirestore(userId, "Test User");
                 }
             }
-
 
             editor.putBoolean("registered", !isGuestMode);
             editor.putString("userId", userId);
             editor.apply();
 
-
             if (isGuestMode) {
-                Toast.makeText(this, isEn ? "Welcome, Guest! 🌊" : "Добро пожаловать, Гость! 🌊", Toast.LENGTH_SHORT).show();
+                Toast.makeText(this, isEn ? "Welcome, Test User! 🌊" : "Добро пожаловать, Test User! 🌊", Toast.LENGTH_SHORT).show();
             } else {
                 Toast.makeText(this, isEn ? "Data successfully synced! 🌊" : "Данные успешно синхронизированы! 🌊", Toast.LENGTH_SHORT).show();
             }
 
             navigateToMain();
         });
+    }
+
+    private void saveGuestNameInFirestore(String userId, String guestName) {
+        Map<String, Object> guestUpdate = new HashMap<>();
+        guestUpdate.put("firstName", guestName);
+        guestUpdate.put("lastName", "");
+        guestUpdate.put("email", GUEST_EMAIL);
+
+        mFirestore.collection("users").document(userId)
+                .set(guestUpdate, SetOptions.merge())
+                .addOnFailureListener(e -> Log.e(TAG, "Ошибка сохранения имени гостя в Firestore", e));
     }
 
     private void navigateToMain() {

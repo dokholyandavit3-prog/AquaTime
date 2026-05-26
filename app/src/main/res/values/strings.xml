@@ -156,7 +156,7 @@
     <string name="word_training_2">тренировки</string>
     <string name="word_training_3">тренировок</string>
     <string name="rank_status_sec">с</string>
-<!-- Register/Login -->
+    <!-- Register/Login -->
     <string name="hint_username">Имя пользователя</string>
     <string name="hint_email">Электронная почта</string>
     <string name="hint_password">Пароль</string>

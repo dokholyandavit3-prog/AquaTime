@@ -5,6 +5,7 @@ import android.content.Context;
 import android.content.SharedPreferences;
 import android.graphics.Color;
 import android.os.Bundle;
+import android.util.Log;
 import android.util.TypedValue;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -17,12 +18,20 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
 
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseUser;
+import com.google.firebase.firestore.FirebaseFirestore;
+import com.google.firebase.firestore.SetOptions;
+
 import david.dokholyan.aquatime.R;
 
+import java.util.HashMap;
 import java.util.Locale;
+import java.util.Map;
 
 public class StopwatchHistoryFragment extends Fragment {
 
+    private static final String TAG = "AquaTimeStopwatch";
     private SharedPreferences prefs;
     private LinearLayout listContainer;
 
@@ -77,7 +86,6 @@ public class StopwatchHistoryFragment extends Fragment {
             tvItem.setPadding(32, 24, 32, 24);
             tvItem.setBackgroundColor(Color.WHITE);
 
-
             tvItem.setOnLongClickListener(view -> {
                 showDeleteDialog(indexToDelete, logs);
                 return true;
@@ -119,19 +127,20 @@ public class StopwatchHistoryFragment extends Fragment {
 
         String updatedLog = sb.toString();
 
-
         prefs.edit().putString("stopwatch_log", updatedLog).apply();
 
-
-        com.google.firebase.auth.FirebaseUser user = com.google.firebase.auth.FirebaseAuth.getInstance().getCurrentUser();
+        FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
         if (user != null) {
-            com.google.firebase.database.FirebaseDatabase.getInstance().getReference("users")
-                    .child(user.getUid()).child("stopwatch_log").setValue(updatedLog);
+            Map<String, Object> updateMap = new HashMap<>();
+            updateMap.put("stopwatch_log", updatedLog);
+
+            FirebaseFirestore.getInstance().collection("users")
+                    .document(user.getUid())
+                    .set(updateMap, SetOptions.merge())
+                    .addOnFailureListener(e -> Log.e(TAG, "Ошибка удаления замера в Firestore", e));
         }
 
-
         loadFullStopwatchHistory();
-
         Toast.makeText(getContext(), isEnglish() ? "Deleted" : "Удалено", Toast.LENGTH_SHORT).show();
     }
 

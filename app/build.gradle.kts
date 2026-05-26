@@ -45,6 +45,8 @@ dependencies {
     implementation("com.airbnb.android:lottie:6.3.0")
     implementation("com.google.android.material:material:1.9.0")
     implementation("com.yandex.android:maps.mobile:4.4.0-lite")
+    implementation ("com.google.firebase:firebase-storage")
+    implementation(libs.firebase.firestore)
     testImplementation(libs.junit)
     androidTestImplementation(libs.ext.junit)
     androidTestImplementation(libs.espresso.core)

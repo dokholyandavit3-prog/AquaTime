@@ -1,9 +1,13 @@
 package david.dokholyan.aquatime.ui;
 
+import android.content.BroadcastReceiver;
 import android.content.Context;
+import android.content.Intent;
+import android.content.IntentFilter;
 import android.content.SharedPreferences;
 import android.graphics.Color;
 import android.os.Bundle;
+import android.util.Log;
 import android.util.TypedValue;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -18,16 +22,27 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
+import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 import androidx.navigation.Navigation;
+
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseUser;
+import com.google.firebase.firestore.DocumentSnapshot;
+import com.google.firebase.firestore.FirebaseFirestore;
+import com.google.firebase.firestore.SetOptions;
 
 import david.dokholyan.aquatime.R;
 
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.Locale;
+import java.util.Map;
 
 public class AnalyticsFragment extends Fragment {
+
+    private static final String TAG = "AquaTimeAnalytics";
 
     private SharedPreferences prefs;
     private TextView tvTotalDist, tvTotalTrainingsCount, tvHistory, tvPlanner;
@@ -37,7 +52,6 @@ public class AnalyticsFragment extends Fragment {
     private ProgressChartView chartDist;
     private boolean isExpanded = false;
 
-    // Ссылки на текстовые метки дней недели для динамической локализации
     private TextView tvDayMon, tvDayTue, tvDayWed, tvDayThu, tvDayFri, tvDaySat, tvDaySun;
 
     private final String[] styles = {"Вольный стиль 50м", "Брасс 50м", "На спине 50м", "Баттерфляй 50м", "Комплекс 100м"};
@@ -47,6 +61,23 @@ public class AnalyticsFragment extends Fragment {
             {62.25, 52.25, 42.25, 34.25, 31.05, 28.85, 26.90, 25.50, 24.00},
             {58.25, 48.25, 38.25, 31.25, 29.05, 26.85, 25.40, 24.20, 22.80},
             {135.0, 115.0, 102.0, 74.50, 69.50, 64.20, 59.50, 56.40, 53.60}
+    };
+
+    private final BroadcastReceiver statsUpdateReceiver = new BroadcastReceiver() {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            if (isAdded() && getContext() != null) {
+                calculateWeeklyAndArchiveStats();
+                updateStopwatchPreview();
+                if (tvPlanner != null) {
+                    tvPlanner.setText(prefs.getString("planner", getString(R.string.planner_empty)));
+                }
+                if (ranksContainer != null) {
+                    ranksContainer.removeAllViews();
+                    showRanks(0, isExpanded ? styles.length : 3);
+                }
+            }
+        }
     };
 
     @Nullable
@@ -59,6 +90,7 @@ public class AnalyticsFragment extends Fragment {
         calculateWeeklyAndArchiveStats();
         updateStopwatchPreview();
         showRanks(0, 3);
+
         fetchFreshDataFromFirebase();
 
         updateStaticButtonsLocalization(v);
@@ -82,6 +114,29 @@ public class AnalyticsFragment extends Fragment {
         return v;
     }
 
+    @Override
+    public void onStart() {
+        super.onStart();
+        if (getContext() != null) {
+            LocalBroadcastManager.getInstance(getContext())
+                    .registerReceiver(statsUpdateReceiver, new IntentFilter("david.dokholyan.aquatime.ACTION_WORKOUT_SAVED"));
+        }
+        calculateWeeklyAndArchiveStats();
+        updateStopwatchPreview();
+        if (tvPlanner != null) {
+            tvPlanner.setText(prefs.getString("planner", getString(R.string.planner_empty)));
+        }
+    }
+
+
+    @Override
+    public void onStop() {
+        super.onStop();
+        if (getContext() != null) {
+            LocalBroadcastManager.getInstance(getContext()).unregisterReceiver(statsUpdateReceiver);
+        }
+    }
+
     private void initViews(View v) {
         tvTotalDist = v.findViewById(R.id.tv_total_distance);
         tvTotalTrainingsCount = v.findViewById(R.id.tv_total_trainings_count);
@@ -93,7 +148,6 @@ public class AnalyticsFragment extends Fragment {
 
         tvArchivePreview = v.findViewById(R.id.tv_archive_preview);
         tvStopwatchSummary = v.findViewById(R.id.tv_stopwatch_summary);
-
 
         tvDayMon = v.findViewById(R.id.tv_day_mon);
         tvDayTue = v.findViewById(R.id.tv_day_tue);
@@ -128,7 +182,6 @@ public class AnalyticsFragment extends Fragment {
         if (btnStopwatch != null) btnStopwatch.setText(en ? "VIEW HISTORY" : "ВСЯ ИСТОРИЯ");
     }
 
-    // Метод динамического изменения формата подписей дней недели под графиком
     private void updateChartDaysLocalization() {
         boolean en = isEnglish();
         if (tvDayMon != null) tvDayMon.setText(en ? "M\n(Mo)" : "M\n(Пн)");
@@ -164,20 +217,22 @@ public class AnalyticsFragment extends Fragment {
     }
 
     private void fetchFreshDataFromFirebase() {
-        com.google.firebase.auth.FirebaseUser user = com.google.firebase.auth.FirebaseAuth.getInstance().getCurrentUser();
+        FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
         if (user != null) {
             String userId = user.getUid();
-            com.google.firebase.database.FirebaseDatabase.getInstance().getReference("users").child(userId).get()
-                    .addOnCompleteListener(task -> {
-                        if (task.isSuccessful() && task.getResult().exists()) {
-                            com.google.firebase.database.DataSnapshot snapshot = task.getResult();
 
-                            String allRes = snapshot.child("all_res").getValue(String.class);
-                            Long totalMeters = snapshot.child("total_meters").getValue(Long.class);
-                            Long trainingsCount = snapshot.child("trainings_count").getValue(Long.class);
-                            Long weeklyMeters = snapshot.child("weekly_meters").getValue(Long.class);
-                            String cloudPlanner = snapshot.child("planner").getValue(String.class);
-                            String stopwatchLog = snapshot.child("stopwatch_log").getValue(String.class);
+            FirebaseFirestore.getInstance().collection("users").document(userId).get()
+                    .addOnCompleteListener(task -> {
+                        if (task.isSuccessful() && task.getResult() != null && task.getResult().exists()) {
+                            DocumentSnapshot snapshot = task.getResult();
+                            Log.d(TAG, "Синхронизация аналитики из Firestore успешна");
+
+                            String allRes = snapshot.getString("all_res");
+                            Long totalMeters = snapshot.getLong("total_meters");
+                            Long trainingsCount = snapshot.getLong("trainings_count");
+                            Long weeklyMeters = snapshot.getLong("weekly_meters");
+                            String cloudPlanner = snapshot.getString("planner");
+                            String stopwatchLog = snapshot.getString("stopwatch_log");
 
                             SharedPreferences.Editor editor = prefs.edit();
                             if (allRes != null) editor.putString("all_res", allRes);
@@ -186,6 +241,16 @@ public class AnalyticsFragment extends Fragment {
                             if (weeklyMeters != null) editor.putInt("weekly_meters", weeklyMeters.intValue());
                             if (cloudPlanner != null) editor.putString("planner", cloudPlanner);
                             if (stopwatchLog != null) editor.putString("stopwatch_log", stopwatchLog);
+
+
+                            if (snapshot.contains("last_completed_distance")) {
+                                Long lastDist = snapshot.getLong("last_completed_distance");
+                                if (lastDist != null) editor.putInt("last_completed_distance", lastDist.intValue());
+                            }
+                            if (snapshot.contains("last_completed_time")) editor.putString("last_completed_time", snapshot.getString("last_completed_time"));
+                            if (snapshot.contains("last_completed_date")) editor.putString("last_completed_date", snapshot.getString("last_completed_date"));
+                            if (snapshot.contains("last_completed_style")) editor.putString("last_completed_style", snapshot.getString("last_completed_style"));
+
                             editor.apply();
 
                             if (isAdded() && getContext() != null) {
@@ -197,7 +262,13 @@ public class AnalyticsFragment extends Fragment {
                                 }
                                 ranksContainer.removeAllViews();
                                 showRanks(0, isExpanded ? styles.length : 3);
+
+
+                                Intent updateDashboardIntent = new Intent("david.dokholyan.aquatime.ACTION_WORKOUT_SAVED");
+                                LocalBroadcastManager.getInstance(getContext()).sendBroadcast(updateDashboardIntent);
                             }
+                        } else {
+                            Log.e(TAG, "Ошибка чтения аналитики из Firestore: ", task.getException());
                         }
                     });
         }
@@ -209,6 +280,7 @@ public class AnalyticsFragment extends Fragment {
             tvTotalTrainingsCount.setText("0");
             tvTotalDist.setText(getString(R.string.meters_format, 0));
             if (tvArchivePreview != null) tvArchivePreview.setText(getString(R.string.empty_archive_msg));
+            if (chartDist != null) chartDist.setData(new float[7], 1);
             return;
         }
 
@@ -262,6 +334,8 @@ public class AnalyticsFragment extends Fragment {
                 String prefix = isEnglish() ? "Last: " : getString(R.string.last_workout_prefix);
                 tvHistory.setText(prefix + entries[0].replace("|", " — "));
             }
+        } else {
+            tvHistory.setText(isEnglish() ? "Last: None" : "Последняя: Нет");
         }
 
         if (tvArchivePreview != null) {
@@ -371,10 +445,15 @@ public class AnalyticsFragment extends Fragment {
                 Toast.makeText(getContext(), getString(R.string.goal_added_msg), Toast.LENGTH_SHORT).show();
             }
 
-            com.google.firebase.auth.FirebaseUser user = com.google.firebase.auth.FirebaseAuth.getInstance().getCurrentUser();
+            FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
             if (user != null) {
-                com.google.firebase.database.FirebaseDatabase.getInstance().getReference("users")
-                        .child(user.getUid()).child("planner").setValue(updated);
+                Map<String, Object> updateMap = new HashMap<>();
+                updateMap.put("planner", updated);
+
+                FirebaseFirestore.getInstance().collection("users")
+                        .document(user.getUid())
+                        .set(updateMap, SetOptions.merge())
+                        .addOnFailureListener(e -> Log.e(TAG, "Ошибка сохранения цели в Firestore", e));
             }
         }
     }
