@@ -103,20 +103,37 @@ public class DashboardFragment extends Fragment {
     }
 
     private void updateStreakLogic() {
-        long lastVisitDay = prefs.getLong("last_visit_day", 0);
+        com.google.firebase.auth.FirebaseAuth mAuth = com.google.firebase.auth.FirebaseAuth.getInstance();
+        com.google.firebase.firestore.FirebaseFirestore mFirestore = com.google.firebase.firestore.FirebaseFirestore.getInstance();
+        com.google.firebase.auth.FirebaseUser currentUser = mAuth.getCurrentUser();
+
+        String lastVisitDateStr = prefs.getString("last_visit_date_string", "");
         int currentStreak = prefs.getInt("current_streak", 0);
         int bestStreak = prefs.getInt("best_streak", 0);
 
-        long today = System.currentTimeMillis() / (1000 * 60 * 60 * 24);
+        SimpleDateFormat dateFormater = new SimpleDateFormat("yyyy-MM-dd", Locale.US);
+        Calendar cal = Calendar.getInstance();
+        String todayStr = dateFormater.format(cal.getTime());
 
-        if (lastVisitDay == 0) {
+        if (lastVisitDateStr.isEmpty()) {
             currentStreak = 1;
-        } else if (today == lastVisitDay) {
-
-        } else if (today == lastVisitDay + 1) {
-            currentStreak++;
+        } else if (todayStr.equals(lastVisitDateStr)) {
+            return;
         } else {
-            currentStreak = 1;
+            try {
+                Date lastVisitDate = dateFormater.parse(lastVisitDateStr);
+                cal.setTime(lastVisitDate);
+                cal.add(Calendar.DAY_OF_YEAR, 1);
+                String tomorrowOfLastVisit = dateFormater.format(cal.getTime());
+
+                if (todayStr.equals(tomorrowOfLastVisit)) {
+                    currentStreak++;
+                } else {
+                    currentStreak = 1;
+                }
+            } catch (Exception e) {
+                currentStreak = 1;
+            }
         }
 
         if (currentStreak > bestStreak) {
@@ -124,12 +141,32 @@ public class DashboardFragment extends Fragment {
         }
 
         prefs.edit()
-                .putLong("last_visit_day", today)
+                .putString("last_visit_date_string", todayStr)
                 .putInt("current_streak", currentStreak)
                 .putInt("best_streak", bestStreak)
                 .apply();
-    }
 
+        if (currentUser != null) {
+            String userId = currentUser.getUid();
+
+            java.util.Map<String, Object> streakUpdate = new java.util.HashMap<>();
+            streakUpdate.put("last_visit_date_string", todayStr);
+            streakUpdate.put("current_streak", (long) currentStreak);
+            streakUpdate.put("best_streak", (long) bestStreak);
+
+            mFirestore.collection("users").document(userId)
+                    .set(streakUpdate, com.google.firebase.firestore.SetOptions.merge())
+                    .addOnSuccessListener(aVoid -> android.util.Log.d("StreakSync", "Стрик успешно синхронизирован с Firebase!"))
+                    .addOnFailureListener(e -> android.util.Log.e("StreakSync", "Ошибка синхронизации стрика", e));
+        }
+
+        if (tvStreakText != null) {
+            tvStreakText.setText(getString(R.string.streak_days_count, currentStreak));
+        }
+        if (tvBestStreakText != null) {
+            tvBestStreakText.setText(getString(R.string.streak_record, bestStreak));
+        }
+    }
     private void updateUI() {
         int streak = prefs.getInt("current_streak", 0);
         int bestStreak = prefs.getInt("best_streak", 0);

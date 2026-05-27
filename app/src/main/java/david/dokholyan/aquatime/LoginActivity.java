@@ -203,7 +203,6 @@ public class LoginActivity extends AppCompatActivity {
                 if (trainingsCount != null) editor.putInt("trainings_count", trainingsCount.intValue());
                 if (weeklyMeters != null) editor.putInt("weekly_meters", weeklyMeters.intValue());
 
-
                 if (snapshot.contains("last_completed_distance")) {
                     Long lastDist = snapshot.getLong("last_completed_distance");
                     if (lastDist != null) editor.putInt("last_completed_distance", lastDist.intValue());
@@ -211,6 +210,19 @@ public class LoginActivity extends AppCompatActivity {
                 if (snapshot.contains("last_completed_time")) editor.putString("last_completed_time", snapshot.getString("last_completed_time"));
                 if (snapshot.contains("last_completed_date")) editor.putString("last_completed_date", snapshot.getString("last_completed_date"));
                 if (snapshot.contains("last_completed_style")) editor.putString("last_completed_style", snapshot.getString("last_completed_style"));
+
+
+                if (snapshot.contains("current_streak")) {
+                    Long currentStreak = snapshot.getLong("current_streak");
+                    if (currentStreak != null) editor.putInt("current_streak", currentStreak.intValue());
+                }
+                if (snapshot.contains("best_streak")) {
+                    Long bestStreak = snapshot.getLong("best_streak");
+                    if (bestStreak != null) editor.putInt("best_streak", bestStreak.intValue());
+                }
+                if (snapshot.contains("last_visit_date_string")) {
+                    editor.putString("last_visit_date_string", snapshot.getString("last_visit_date_string"));
+                }
 
                 if (isGuestMode) {
                     Log.d(TAG, "Гостевой режим: принудительно ставим Test User");

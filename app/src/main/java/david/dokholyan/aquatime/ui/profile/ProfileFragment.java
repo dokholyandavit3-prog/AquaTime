@@ -1,6 +1,7 @@
 package david.dokholyan.aquatime.ui.profile;
 
 import android.content.Context;
+import android.content.Intent;
 import android.content.SharedPreferences;
 import android.graphics.*;
 import android.graphics.drawable.BitmapDrawable;
@@ -9,6 +10,7 @@ import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
+import android.util.Base64;
 import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -27,15 +29,12 @@ import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.SetOptions;
-import com.google.firebase.storage.FirebaseStorage;
-import com.google.firebase.storage.StorageReference;
 
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.net.URL;
 import java.util.HashMap;
 import java.util.Locale;
 import java.util.Map;
@@ -50,14 +49,12 @@ public class ProfileFragment extends Fragment {
     private ImageView imgProfile;
     private ProgressBar pbAvatarLoading;
     private SharedPreferences langPrefs;
-    private ActivityResultLauncher<String> imagePicker;
-    private static final String DEFAULT_EMOJI = "🏊‍♂️";
 
-    private ProgressBar pbFreestyle, pbBreast, pbFly;
+    private ActivityResultLauncher<Intent> imagePicker;
+    private static final String DEFAULT_EMOJI = "🏊‍♂️";
 
     private FirebaseAuth mAuth;
     private FirebaseFirestore db;
-    private FirebaseStorage storage;
     private String currentUid;
 
     private String cloudAllRes = "";
@@ -71,7 +68,6 @@ public class ProfileFragment extends Fragment {
 
         mAuth = FirebaseAuth.getInstance();
         db = FirebaseFirestore.getInstance();
-        storage = FirebaseStorage.getInstance();
 
         FirebaseUser currentUser = mAuth.getCurrentUser();
         if (currentUser != null) {
@@ -82,9 +78,18 @@ public class ProfileFragment extends Fragment {
 
         initViews(view);
 
-        imagePicker = registerForActivityResult(new ActivityResultContracts.GetContent(), uri -> {
-            if (uri != null && currentUid != null) {
-                uploadImageToFirebaseStorage(uri);
+        imagePicker = registerForActivityResult(new ActivityResultContracts.StartActivityForResult(), result -> {
+            if (result.getResultCode() == android.app.Activity.RESULT_OK && result.getData() != null) {
+                Uri selectedImageUri = result.getData().getData();
+                if (selectedImageUri != null && currentUid != null) {
+                    Uri safeUri = copyUriToCache(selectedImageUri);
+                    if (safeUri != null) {
+                        processAndSaveImageToFirestore(safeUri);
+                    } else {
+                        if (pbAvatarLoading != null) pbAvatarLoading.setVisibility(View.GONE);
+                        Toast.makeText(getContext(), isEnglish() ? "Failed to process image" : "Ошибка обработки фото", Toast.LENGTH_SHORT).show();
+                    }
+                }
             }
         });
 
@@ -97,6 +102,33 @@ public class ProfileFragment extends Fragment {
         return view;
     }
 
+    private Uri copyUriToCache(Uri sourceUri) {
+        try {
+            Context context = getContext();
+            if (context == null) return null;
+
+            InputStream inputStream = context.getContentResolver().openInputStream(sourceUri);
+            if (inputStream == null) return null;
+
+            File tempFile = new File(context.getCacheDir(), "temp_avatar.jpg");
+            OutputStream outputStream = new FileOutputStream(tempFile);
+
+            byte[] buffer = new byte[4096];
+            int bytesRead;
+            while ((bytesRead = inputStream.read(buffer)) != -1) {
+                outputStream.write(buffer, 0, bytesRead);
+            }
+
+            outputStream.close();
+            inputStream.close();
+
+            return Uri.fromFile(tempFile);
+        } catch (Exception e) {
+            e.printStackTrace();
+            return null;
+        }
+    }
+
     private void initViews(View v) {
         tvName = v.findViewById(R.id.tv_name);
         tvEmail = v.findViewById(R.id.tv_email);
@@ -106,7 +138,6 @@ public class ProfileFragment extends Fragment {
         tvCountry = v.findViewById(R.id.tv_country);
         tvAchievements = v.findViewById(R.id.tv_profile_achievements);
         imgProfile = v.findViewById(R.id.img_avatar);
-
         pbAvatarLoading = v.findViewById(R.id.pb_avatar_loading);
 
         v.findViewById(R.id.btn_edit_profile).setOnClickListener(view ->
@@ -218,7 +249,6 @@ public class ProfileFragment extends Fragment {
                         tvMainRating.setText(String.valueOf(updatedRating));
                         updateLevelCardText(updatedRating);
 
-
                         String avatarType = documentSnapshot.getString("profile_type");
                         String avatarVal = documentSnapshot.getString("profile_val");
                         if (avatarType == null) avatarType = "emoji";
@@ -231,37 +261,58 @@ public class ProfileFragment extends Fragment {
                 });
     }
 
-    private void uploadImageToFirebaseStorage(Uri uri) {
+
+    private void processAndSaveImageToFirestore(Uri fileUri) {
         if (currentUid == null || getContext() == null) return;
 
         if (pbAvatarLoading != null) pbAvatarLoading.setVisibility(View.VISIBLE);
 
-        StorageReference avatarRef = storage.getReference().child("avatars/" + currentUid + ".jpg");
+        executor.execute(() -> {
+            try {
+                InputStream inputStream = requireContext().getContentResolver().openInputStream(fileUri);
+                Bitmap originalBitmap = BitmapFactory.decodeStream(inputStream);
+                if (inputStream != null) inputStream.close();
 
-        try {
-            InputStream inputStream = requireContext().getContentResolver().openInputStream(uri);
-            Bitmap bitmap = BitmapFactory.decodeStream(inputStream);
-            ByteArrayOutputStream baos = new ByteArrayOutputStream();
-            if (bitmap != null) {
-                bitmap.compress(Bitmap.CompressFormat.JPEG, 75, baos);
-                byte[] data = baos.toByteArray();
+                if (originalBitmap != null) {
+                    int width = originalBitmap.getWidth();
+                    int height = originalBitmap.getHeight();
+                    int size = Math.min(width, height);
 
-                avatarRef.putBytes(data)
-                        .addOnSuccessListener(taskSnapshot -> {
-                            avatarRef.getDownloadUrl().addOnSuccessListener(downloadUri -> {
-                                String imageUrl = downloadUri.toString();
-                                saveAvatarToFirestore("url", imageUrl);
-                            });
-                        })
-                        .addOnFailureListener(e -> {
-                            if (pbAvatarLoading != null) pbAvatarLoading.setVisibility(View.GONE);
-                            Toast.makeText(getContext(), isEnglish() ? "Upload failed" : "Ошибка загрузки фото", Toast.LENGTH_SHORT).show();
-                        });
+                    int x = (width - size) / 2;
+                    int y = (height - size) / 2;
+
+                    Bitmap squaredBitmap = Bitmap.createBitmap(originalBitmap, x, y, size, size);
+
+                    Bitmap scaledBitmap = Bitmap.createScaledBitmap(squaredBitmap, 200, 200, true);
+
+                    if (squaredBitmap != scaledBitmap) squaredBitmap.recycle();
+                    originalBitmap.recycle();
+
+                    ByteArrayOutputStream baos = new ByteArrayOutputStream();
+                    scaledBitmap.compress(Bitmap.CompressFormat.JPEG, 85, baos);
+                    byte[] imageBytes = baos.toByteArray();
+                    scaledBitmap.recycle();
+
+                    String base64Image = Base64.encodeToString(imageBytes, Base64.DEFAULT);
+
+                    new Handler(Looper.getMainLooper()).post(() -> {
+                        saveAvatarToFirestore("base64", base64Image);
+                    });
+                } else {
+                    hideLoadingAndShowError();
+                }
+            } catch (Exception e) {
+                e.printStackTrace();
+                hideLoadingAndShowError();
             }
-        } catch (Exception e) {
+        });
+    }
+
+    private void hideLoadingAndShowError() {
+        new Handler(Looper.getMainLooper()).post(() -> {
             if (pbAvatarLoading != null) pbAvatarLoading.setVisibility(View.GONE);
-            e.printStackTrace();
-        }
+            Toast.makeText(getContext(), isEnglish() ? "Upload failed" : "Ошибка загрузки фото", Toast.LENGTH_SHORT).show();
+        });
     }
 
     private void saveAvatarToFirestore(String type, String value) {
@@ -283,45 +334,23 @@ public class ProfileFragment extends Fragment {
                 });
     }
 
+
     private void renderProfileImage(String type, String val) {
         if (pbAvatarLoading != null) pbAvatarLoading.setVisibility(View.GONE);
 
-        if ("url".equals(type)) {
-            if (pbAvatarLoading != null) pbAvatarLoading.setVisibility(View.VISIBLE);
+        if ("base64".equals(type)) {
+            try {
+                byte[] decodedString = Base64.decode(val, Base64.DEFAULT);
+                Bitmap bitmap = BitmapFactory.decodeByteArray(decodedString, 0, decodedString.length);
 
-            executor.execute(() -> {
-                try {
-                    InputStream is = new URL(val).openStream();
-                    Bitmap bitmap = BitmapFactory.decodeStream(is);
-
-                    new Handler(Looper.getMainLooper()).post(() -> {
-                        if (bitmap != null && isAdded()) {
-                            imgProfile.setScaleType(ImageView.ScaleType.FIT_CENTER);
-                            imgProfile.setImageDrawable(createCircularBitmap(bitmap));
-                        } else {
-                            setEmojiAvatar(DEFAULT_EMOJI);
-                        }
-                        if (pbAvatarLoading != null) pbAvatarLoading.setVisibility(View.GONE);
-                    });
-                } catch (Exception e) {
-                    new Handler(Looper.getMainLooper()).post(() -> {
-                        setEmojiAvatar(DEFAULT_EMOJI);
-                        if (pbAvatarLoading != null) pbAvatarLoading.setVisibility(View.GONE);
-                    });
-                    e.printStackTrace();
-                }
-            });
-        } else if ("uri".equals(type)) {
-            File f = new File(val);
-            if (f.exists()) {
-                Bitmap bitmap = BitmapFactory.decodeFile(f.getAbsolutePath());
                 if (bitmap != null) {
                     imgProfile.setScaleType(ImageView.ScaleType.FIT_CENTER);
                     imgProfile.setImageDrawable(createCircularBitmap(bitmap));
                 } else {
                     setEmojiAvatar(DEFAULT_EMOJI);
                 }
-            } else {
+            } catch (Exception e) {
+                e.printStackTrace();
                 setEmojiAvatar(DEFAULT_EMOJI);
             }
         } else {
@@ -371,8 +400,13 @@ public class ProfileFragment extends Fragment {
         String[] options = en ? new String[]{"📸 Gallery", "✨ Choose Emoji"} : new String[]{"📸 Галерея", "✨ Выбрать Эмодзи"};
         new AlertDialog.Builder(requireContext())
                 .setItems(options, (d, w) -> {
-                    if (w == 0) imagePicker.launch("image/*");
-                    else showEmojiSelectionDialog();
+                    if (w == 0) {
+                        Intent intent = new Intent(Intent.ACTION_PICK, android.provider.MediaStore.Images.Media.EXTERNAL_CONTENT_URI);
+                        intent.setType("image/*");
+                        imagePicker.launch(intent);
+                    } else {
+                        showEmojiSelectionDialog();
+                    }
                 }).show();
     }
 
